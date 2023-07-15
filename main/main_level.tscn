@@ -1,9 +1,7 @@
 [gd_scene load_steps=2 format=3 uid="uid://bq0oemua0dprk"]
 
-[ext_resource type="PackedScene" uid="uid://dqr0sfomyyuxb" path="res://main/tiles/tile.tscn" id="1_vyvbc"]
+[ext_resource type="PackedScene" uid="uid://hw3dfrxibldv" path="res://main/game_board.tscn" id="1_owtf6"]
 
 [node name="main_level" type="Node2D"]
 
-[node name="grid_container" type="Node2D" parent="."]
-
-[node name="tile" parent="grid_container" instance=ExtResource("1_vyvbc")]
+[node name="game_board" parent="." instance=ExtResource("1_owtf6")]

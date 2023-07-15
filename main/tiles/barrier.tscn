@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8o1g2yoghb3d"]
+
+[ext_resource type="Texture2D" uid="uid://bg26s2vs7qo1r" path="res://main/tiles/barriers.png" id="1_5ee6g"]
+
+[node name="barrier" type="Node2D"]
+
+[node name="barrier_sprite" type="Sprite2D" parent="."]
+texture = ExtResource("1_5ee6g")

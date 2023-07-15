@@ -1,3 +1,13 @@
-[gd_scene format=3 uid="uid://dqr0sfomyyuxb"]
+[gd_scene load_steps=3 format=3 uid="uid://dqr0sfomyyuxb"]
+
+[ext_resource type="Script" path="res://main/tiles/tile.gd" id="1_rt1vl"]
+[ext_resource type="Texture2D" uid="uid://ffpi34ko27lh" path="res://main/tiles/tiles.png" id="2_s7pbq"]
 
 [node name="tile" type="Node2D"]
+script = ExtResource("1_rt1vl")
+
+[node name="tile_sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_s7pbq")
+centered = false
+hframes = 3
+vframes = 3
