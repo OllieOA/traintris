@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 GameControl="*res://global/game_control.gd"
 GameScore="*res://global/game_score.gd"
+SignalBus="*res://global/signal_bus.gd"
 
 [display]
 

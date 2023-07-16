@@ -1,22 +1,38 @@
 extends Sprite2D
 
-var grid_position: Vector2i
 
 const X_OFFSET: int = -2
 const Y_OFFSET: int = -2
 
-var target_position: Vector2i
+var grid_coord: Vector2i
+var target_grid_coord: Vector2i
+var target_position: Vector2
 
 func initialise_cursor():
 	global_position = Vector2(GameBoard.GRID_START_X + X_OFFSET, \
 			GameBoard.GRID_START_Y + GameBoard.GRID_SIZE * (GameBoard.GRID_HEIGHT - 1) + Y_OFFSET)
 	
-	grid_position = Vector2i(0, GameBoard.GRID_HEIGHT - 1)
+	grid_coord = Vector2i(0, GameBoard.GRID_HEIGHT - 1)
 
 
 func move_cursor_grid_with_animate(new_dir: Vector2i) -> Vector2i:
-	# TODO: Add tween
-	grid_position += new_dir
-	global_position = Vector2(global_position.x + GameBoard.GRID_SIZE * new_dir.x, global_position.y + GameBoard.GRID_SIZE * new_dir.y)
-	# TODO: HANDLE WRAPPING
-	return grid_position
+	target_grid_coord = grid_coord + new_dir
+	if target_grid_coord.x < 0:  # Wrap right side
+		target_grid_coord.x = GameBoard.GRID_WIDTH - 1
+	elif target_grid_coord.x >= GameBoard.GRID_WIDTH:  # Wrap left side
+		target_grid_coord.x = 0
+		
+	if target_grid_coord.y < 0: # Wrap to bottom
+		target_grid_coord.y = GameBoard.GRID_HEIGHT - 1
+	elif target_grid_coord.y >= GameBoard.GRID_HEIGHT: # Wrap to top
+		target_grid_coord.y = 0
+	
+	target_position = Vector2(GameBoard.GRID_START_X + X_OFFSET + target_grid_coord.x * GameBoard.GRID_SIZE, \
+			GameBoard.GRID_START_Y + Y_OFFSET + target_grid_coord.y * GameBoard.GRID_SIZE)
+			
+	var tween = get_tree().create_tween()
+	tween.tween_property(self, "global_position", target_position, 0.02).set_ease(Tween.EASE_IN)
+#	global_position = target_position
+	tween.play()
+	grid_coord = target_grid_coord
+	return grid_coord

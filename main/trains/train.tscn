@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cnghfg51btld8"]
+
+[ext_resource type="Script" path="res://main/trains/train.gd" id="1_t3gio"]
+
+[node name="train" type="Node2D"]
+y_sort_enabled = true
+script = ExtResource("1_t3gio")

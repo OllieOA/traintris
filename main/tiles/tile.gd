@@ -1,10 +1,10 @@
 class_name Tile extends Node2D
 
 # This enum sets up the names in order of the frames in the sprite
-enum TileID {VERT, RIGHT_UP, LEFT_DOWN, HORIZ, LEFT_UP, RIGHT_DOWN, CROSS, EMPTY}
+enum TileID {VERT, RIGHT_UP, LEFT_DOWN, HORIZ, LEFT_UP, RIGHT_DOWN, CROSS, EMPTY, BLOCK}
 
 # Helpers for direction consistency
-enum Dir {UP, DOWN, LEFT, RIGHT}
+enum Dir {LEFT, DOWN, RIGHT, UP}
 enum Rot {CLOCKWISE, ANTICLOCKWISE}
 
 const TILE_ENTRY_EXIT_PAIRS: Dictionary = {
@@ -15,7 +15,8 @@ const TILE_ENTRY_EXIT_PAIRS: Dictionary = {
 	TileID.LEFT_UP: [[Dir.LEFT, Dir.UP]],
 	TileID.RIGHT_DOWN: [[Dir.RIGHT, Dir.DOWN]],
 	TileID.CROSS: [[Dir.RIGHT, Dir.LEFT], [Dir.UP, Dir.DOWN]],
-	TileID.EMPTY: []  # Should not be reachable
+	TileID.EMPTY: [],  # Should not be reachable
+	TileID.BLOCK: []
 }
 
 const CLOCKWISE_ROTATION_DEFINITIONS: Dictionary = {
@@ -41,14 +42,28 @@ const ANTICLOCKWISE_ROTATION_DEFINITIONS: Dictionary = {
 }
 
 var tile_id: TileID : set = set_tile, get = get_tile
+var tile_coord: Vector2i : set = set_tile_coord, get = get_tile_coord
 
 var is_rotatable: bool = false : set = set_is_rotatable, get = get_is_rotatable
 var is_selected: bool = false : set = set_is_selected
 
 @onready var tile_sprite: Sprite2D = $tile_sprite
+@onready var block_sprite: Sprite2D = $block_sprite
 
 func _ready():
 	tile_id = tile_sprite.frame
+
+
+func _process(_delta: float) -> void:
+	if not is_selected:
+		return
+
+	if Input.is_action_just_pressed("rotate_anticlockwise"):
+		rotate_tilewise(Rot.ANTICLOCKWISE)
+	
+	elif Input.is_action_just_pressed("rotate_clockwise"):
+		rotate_tilewise(Rot.CLOCKWISE)
+	
 
 
 func rotate_tilewise(direction: int) -> bool:
@@ -66,22 +81,16 @@ func rotate_tilewise(direction: int) -> bool:
 	tile_id = next_tile
 	tile_sprite.frame = tile_id
 	
+	SignalBus.emit_signal("tile_rotated", tile_coord, self, tile_id)
+	
 	return true
 
 
-# Catch input
-func _unhandled_input(event: InputEvent) -> void:
-	if not is_selected:
-		return
-
-
-	if event.is_action_pressed("rotate_anticlockwise"):
-		print("ROTATING ANTICLOCKWISE")
-		rotate_tilewise(Rot.ANTICLOCKWISE)
-	
-	elif event.is_action_pressed("rotate_clockwise"):
-		print("ROTATING CLOCKWISE")
-		rotate_tilewise(Rot.CLOCKWISE)
+func convert_to_block(target_color: Color) -> void:
+	tile_sprite.hide()
+	block_sprite.show()
+	block_sprite.modulate = target_color
+	set_is_rotatable(false)
 
 
 # Flag setters and getters
@@ -108,3 +117,11 @@ func set_tile(new_tile_id: TileID) -> void:
 
 func get_tile() -> TileID:
 	return tile_id
+
+
+func set_tile_coord(new_tile_coord: Vector2i) -> void:
+	tile_coord = new_tile_coord
+
+
+func get_tile_coord() -> Vector2i:
+	return tile_coord
