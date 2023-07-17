@@ -2,6 +2,7 @@ class_name GameBoard extends Node2D
 
 const TILE_SCENE: PackedScene = preload("res://main/tiles/tile.tscn")
 const BARRIER_SCENE: PackedScene = preload("res://main/tiles/barrier.tscn")
+const TRAIN_SCENE: PackedScene = preload("res://main/trains/train.tscn")
 
 const BASE_RES_X = 480
 const BASE_RES_Y = 640
@@ -13,20 +14,25 @@ const GRID_HEIGHT: int = 15
 const GRID_START_X: int = int((BASE_RES_X / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_WIDTH) / 2)
 
 const RUNWAY_LENGTH: int = 5
+const NUM_RUNWAYS: int = (GRID_WIDTH - 1) / 2
 const YOFFSET: int = RUNWAY_LENGTH * GRID_SIZE
 const GRID_START_Y: int = int(((BASE_RES_Y + YOFFSET) / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_HEIGHT) / 2)
 
 @onready var playable_area: NinePatchRect = $playable_area
 @onready var tiles: Node2D = $tiles
 @onready var barriers: Node2D = $barriers
+@onready var trains: Node2D = $trains
 @onready var runway: Node2D = $runway
 @onready var tile_cursor: Sprite2D = $tile_cursor
+@onready var blocks: Node2D = $blocks
 
 var new_tile: Tile
 var current_active_tile: Tile
 
 var tiles_reference: Dictionary = {}
 var barriers_reference: Dictionary = {}
+
+var train_step_timer: Timer = Timer.new()
 
 func _ready() -> void:
 	randomize()
@@ -38,6 +44,8 @@ func _ready() -> void:
 	current_active_tile = tiles_reference[Vector2i(0, GRID_HEIGHT - 1)]
 	current_active_tile.set_is_selected(true)
 	SignalBus.connect("tile_rotated", _on_tile_rotated)
+	spawn_train()
+	_create_train_timer()
 
 
 func _process(_delta: float) -> void:
@@ -84,13 +92,13 @@ func _create_board() -> void:
 	# Not too many of one type, more of the basic types. No empties initially
 	
 	const selection_weights: Dictionary = {
-		Tile.TileID.VERT: 0.65,
-		Tile.TileID.HORIZ: 0.65,
-		Tile.TileID.CROSS: 0.1,
-		Tile.TileID.LEFT_UP: 1.0,
-		Tile.TileID.RIGHT_UP: 1.0,
-		Tile.TileID.LEFT_DOWN: 1.0,
-		Tile.TileID.RIGHT_DOWN: 1.0
+		Tile.TileID.VERT: 1.0,
+		Tile.TileID.HORIZ: 1.0,
+		Tile.TileID.CROSS: 0.2,
+		Tile.TileID.LEFT_UP: 0.9,
+		Tile.TileID.RIGHT_UP: 0.9,
+		Tile.TileID.LEFT_DOWN: 0.9,
+		Tile.TileID.RIGHT_DOWN: 0.9
 	}
 	
 	var accumulated_weights: Dictionary = {}
@@ -174,9 +182,8 @@ func _resolve_barrier_to_tile(
 		elif adjacent_tile_coord.y < 0 and adjacent_tile_coord.x % 2 != 0:
 			if Tile.Dir.UP not in current_connection_points:
 				_add_single_barrier_to_tile(adjacent_tile_coord, Barrier.BarrierID.DOWN)
-	var adjacent_connection_points: Array[int] = _flatten_connection_points(Tile.TILE_ENTRY_EXIT_PAIRS[adjacent_tile_ref.tile_id])
-
-
+		return  # Early return so as to not handle out of bounds
+	
 	""" 
 	Two logical passes required here:
 	First, check if there is a connection point on the adjacent tile and none
@@ -189,6 +196,7 @@ func _resolve_barrier_to_tile(
 	At startup, this will repeat work, but it will useful later in the game
 	"""
 	
+	var adjacent_connection_points: Array[int] = _flatten_connection_points(Tile.TILE_ENTRY_EXIT_PAIRS[adjacent_tile_ref.tile_id])
 	# Remove any existing barriers in these relevant positions
 	var current_tile_barriers = barriers_reference[current_tile_coord]
 	var new_current_barriers = []
@@ -233,5 +241,29 @@ func _create_barriers() -> void:
 		_update_barriers_for_tile(tile_pos)
 
 
+func _create_train_timer() -> void: 
+	train_step_timer.connect("timeout", _on_train_step)
+	train_step_timer.wait_time = GameControl.train_step_timer
+	train_step_timer.one_shot = false
+	train_step_timer.autostart = true
+	add_child(train_step_timer)
+
+
 func _on_tile_rotated(tile_coord: Vector2i, tile_reference: Tile, new_tile_id: Tile.TileID) -> void:
 	_update_barriers_for_tile(tile_coord)
+
+
+# Game progress stuff
+func spawn_train() -> void:
+	var runway_choice: int = randi_range(1, NUM_RUNWAYS)
+	var new_train: Train = TRAIN_SCENE.instantiate()
+	new_train.game_board_reference = self
+	trains.add_child(new_train)
+	var new_train_coord: Vector2i = Vector2i(2 * runway_choice - 1,  -(RUNWAY_LENGTH + 1))
+	new_train.generate_train(new_train_coord)
+
+
+func _on_train_step() -> void:
+	for each_train in trains.get_children():
+		each_train.move_to_next()
+		print("TRAIN UPDATE")

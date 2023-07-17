@@ -7,6 +7,13 @@ enum TileID {VERT, RIGHT_UP, LEFT_DOWN, HORIZ, LEFT_UP, RIGHT_DOWN, CROSS, EMPTY
 enum Dir {LEFT, DOWN, RIGHT, UP}
 enum Rot {CLOCKWISE, ANTICLOCKWISE}
 
+const OPPOSITE_DIRS: Dictionary = {
+	Dir.LEFT: Dir.RIGHT,
+	Dir.RIGHT: Dir.LEFT,
+	Dir.UP: Dir.DOWN,
+	Dir.DOWN: Dir.UP
+}
+
 const TILE_ENTRY_EXIT_PAIRS: Dictionary = {
 	TileID.VERT: [[Dir.UP, Dir.DOWN]],
 	TileID.RIGHT_UP: [[Dir.RIGHT, Dir.UP]],

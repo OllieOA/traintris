@@ -1,10 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://hw3dfrxibldv"]
+[gd_scene load_steps=5 format=3 uid="uid://hw3dfrxibldv"]
 
 [ext_resource type="Texture2D" uid="uid://bdn6bst0p0ftb" path="res://main/game_board_border.png" id="1_cmghq"]
 [ext_resource type="Script" path="res://main/game_board.gd" id="1_glgbf"]
 [ext_resource type="Texture2D" uid="uid://2ioep18xtbsp" path="res://main/tile_cursor.png" id="3_yj2y6"]
 [ext_resource type="Script" path="res://main/tile_cursor.gd" id="4_neesq"]
-[ext_resource type="PackedScene" uid="uid://cnghfg51btld8" path="res://main/trains/train.tscn" id="5_hem3a"]
 
 [node name="game_board" type="Node2D"]
 script = ExtResource("1_glgbf")
@@ -33,4 +32,4 @@ script = ExtResource("4_neesq")
 
 [node name="trains" type="Node2D" parent="."]
 
-[node name="train" parent="trains" instance=ExtResource("5_hem3a")]
+[node name="blocks" type="Node2D" parent="."]
