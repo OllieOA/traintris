@@ -1,7 +1,7 @@
 class_name Tile extends Node2D
 
 # This enum sets up the names in order of the frames in the sprite
-enum TileID {VERT, RIGHT_UP, LEFT_DOWN, HORIZ, LEFT_UP, RIGHT_DOWN, CROSS, EMPTY, BLOCK}
+enum TileID {VERT, RIGHT_UP, LEFT_DOWN, HORIZ, LEFT_UP, RIGHT_DOWN, CROSS, EMPTY, BLOCK, CLEARED}
 
 # Helpers for direction consistency
 enum Dir {LEFT, DOWN, RIGHT, UP, NULL}
@@ -37,7 +37,7 @@ const TILE_ENTRY_EXIT_PAIRS: Dictionary = {
 	TileID.RIGHT_DOWN: [[Dir.RIGHT, Dir.DOWN]],
 	TileID.CROSS: [[Dir.RIGHT, Dir.LEFT], [Dir.UP, Dir.DOWN]],
 	TileID.EMPTY: [],  # Should not be reachable
-	TileID.BLOCK: []
+	TileID.BLOCK: []  # Will be converted
 }
 
 const CLOCKWISE_ROTATION_DEFINITIONS: Dictionary = {
@@ -65,14 +65,16 @@ const ANTICLOCKWISE_ROTATION_DEFINITIONS: Dictionary = {
 var tile_id: TileID : set = set_tile, get = get_tile
 var tile_coord: Vector2i : set = set_tile_coord, get = get_tile_coord
 
-var is_rotatable: bool = false : set = set_is_rotatable, get = get_is_rotatable
+var is_rotatable: bool = true : set = set_is_rotatable, get = get_is_rotatable
 var is_selected: bool = false : set = set_is_selected
+var tile_rect: Rect2
 
 @onready var tile_sprite: Sprite2D = $tile_sprite
 @onready var block_sprite: Sprite2D = $block_sprite
 
 func _ready():
 	tile_id = tile_sprite.frame
+	tile_rect = Rect2(global_position, tile_sprite.get_rect().size)
 
 
 func _process(_delta: float) -> void:
@@ -88,6 +90,9 @@ func _process(_delta: float) -> void:
 
 
 func rotate_tilewise(direction: int) -> bool:
+	if not is_rotatable:
+		return false
+
 	var next_rot_lookup: Dictionary
 	match direction:
 		Rot.ANTICLOCKWISE:
@@ -111,7 +116,13 @@ func convert_to_block(target_color: Color) -> void:
 	tile_sprite.hide()
 	block_sprite.show()
 	block_sprite.modulate = target_color
+	tile_id = TileID.BLOCK
 	set_is_rotatable(false)
+
+
+func clear_tile() -> void:
+	# TODO: Add in cool effect
+	queue_free()
 
 
 # Flag setters and getters

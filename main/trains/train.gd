@@ -14,7 +14,6 @@ const TRAIN_DIRECTION_TO_VECTOR: Dictionary = {
 	Tile.Dir.RIGHT: Vector2i.RIGHT,
 	Tile.Dir.UP: Vector2i.UP,
 }
-const BLOCK_SCENE = preload("res://main/trains/block.tscn")
 
 var train_colour
 var caboose_grid_coord: Vector2i
@@ -107,15 +106,11 @@ func update_all_segments_physically() -> void:
 
 
 func convert_train_to_blocks() -> void:
-	var new_blocks: Array[Vector2i]
+	var new_block_positions: Array[Vector2i]
 	for ref in segments_refs:
-		var new_block = BLOCK_SCENE.instantiate()
-		new_blocks.append(ref.get_current_grid_location())
-		new_block.global_position = ref.global_position
-		game_board_reference.blocks.add_child(new_block)
-		new_block.modulate = train_colour
+		new_block_positions.append(ref.get_previous_grid_location())
 		ref.queue_free()
-	SignalBus.emit_signal()
+	SignalBus.emit_signal("train_converted_to_blocks", new_block_positions, train_colour)
 
 
 func _get_direction_pair(
@@ -155,9 +150,7 @@ func move_to_next() -> void:
 	if game_board_reference.is_barriers_at_tile_in_direction(
 		segments_refs[0].get_previous_grid_location(), segments_refs[0].get_current_train_direction()
 		):
-		
 		convert_train_to_blocks()
 		queue_free()
 		return
-	print("MOVING TRAIN")
 	update_all_segments_physically()

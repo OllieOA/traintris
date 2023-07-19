@@ -6,11 +6,11 @@ const TRAIN_SCENE: PackedScene = preload("res://main/trains/train.tscn")
 
 const BASE_RES_X = 480
 const BASE_RES_Y = 640
-const SCREEN_SCALING_FACTOR: float = 1.75
+const SCREEN_SCALING_FACTOR: float = 2
 
 const GRID_SIZE: int = 16
-const GRID_WIDTH: int = 9
-const GRID_HEIGHT: int = 15
+const GRID_WIDTH: int = 7
+const GRID_HEIGHT: int = 12
 const GRID_START_X: int = int((BASE_RES_X / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_WIDTH) / 2)
 
 const RUNWAY_LENGTH: int = 5
@@ -35,6 +35,15 @@ var tiles_reference: Dictionary = {}
 var barriers_reference: Dictionary = {}
 
 var train_step_timer: Timer = Timer.new()
+var speedup_cooldown_timer: Timer = Timer.new()
+var speedup_cooldown_time: float = 10.0
+
+var global_mouse_pos: Vector2
+var prev_mouse_pos: Vector2
+var active_mouse_grid_pos: Vector2i
+
+var speedup_active: bool = false
+var speedup_cooldown_active: bool = false
 
 func _ready() -> void:
 	randomize()
@@ -46,21 +55,64 @@ func _ready() -> void:
 	current_active_tile = tiles_reference[Vector2i(0, GRID_HEIGHT - 1)]
 	current_active_tile.set_is_selected(true)
 	SignalBus.connect("tile_rotated", _on_tile_rotated)
+	SignalBus.connect("train_converted_to_blocks", _on_train_converted_to_blocks)
 	spawn_train()
 	_create_train_timer()
+	_debug_fill_almost_row()
 
 
 func _process(_delta: float) -> void:
+	global_mouse_pos = get_global_mouse_position()
+	var new_grid_position: Vector2i
 	if GameControl.game_active:
 		if Input.is_action_just_pressed("move_down") or Input.is_action_just_pressed("move_left") or Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("move_up"):
 			var vert_move = Input.get_axis("move_up", "move_down")
 			var horiz_move = Input.get_axis("move_left", "move_right")
-			var new_grid_position: Vector2i
-			new_grid_position = tile_cursor.move_cursor_grid_with_animate(Vector2i(horiz_move, vert_move))
+			new_grid_position = tile_cursor.move_cursor_grid_with_animate(Vector2i(horiz_move, vert_move), true)
+			active_mouse_grid_pos = new_grid_position  # Use this in case of a mouse takeover
+			_select_active_tile(new_grid_position)
 			
-			current_active_tile.set_is_selected(false)
-			current_active_tile = tiles_reference[new_grid_position]
-			current_active_tile.set_is_selected(true)
+		elif global_mouse_pos != prev_mouse_pos:
+			# Detected mouse input
+			for tile_pos in tiles_reference.keys():
+				if tiles_reference[tile_pos].tile_rect.has_point(global_mouse_pos) and tile_pos != active_mouse_grid_pos:
+					active_mouse_grid_pos = tile_pos
+					new_grid_position = tile_cursor.move_cursor_grid_with_animate(active_mouse_grid_pos, false)
+					_select_active_tile(tile_pos)
+					break
+		prev_mouse_pos = get_global_mouse_position()
+	
+		if speedup_cooldown_active and speedup_active:
+			# This will help unsuspecting players that rush the start of the new train
+			speedup_active = false
+			train_step_timer.wait_time = GameControl.train_step_time
+			_restart_step_timer()   
+	
+		if Input.is_action_pressed("speed_up") and not speedup_cooldown_active:
+			train_step_timer.wait_time = GameControl.min_train_step_time
+			if not speedup_active:
+				speedup_active = true
+				_restart_step_timer()
+			
+		if Input.is_action_just_released("speed_up"):
+			train_step_timer.wait_time = GameControl.train_step_time
+			if speedup_active:
+				speedup_active = false
+				_restart_step_timer()
+			if speedup_cooldown_active:
+				speedup_cooldown_active = false  # Allow speedup again
+
+
+func _restart_step_timer() -> void:
+	# Used when there is a new time
+	train_step_timer.stop()
+	train_step_timer.start()
+
+
+func _select_active_tile(new_grid_position: Vector2i):
+	current_active_tile.set_is_selected(false)
+	current_active_tile = tiles_reference[new_grid_position]
+	current_active_tile.set_is_selected(true)
 
 
 func _create_playable_area() -> void:
@@ -245,10 +297,16 @@ func _create_barriers() -> void:
 
 func _create_train_timer() -> void: 
 	train_step_timer.connect("timeout", _on_train_step)
-	train_step_timer.wait_time = GameControl.train_step_timer
+	train_step_timer.wait_time = GameControl.train_step_time
 	train_step_timer.one_shot = false
 	train_step_timer.autostart = true
 	add_child(train_step_timer)
+	
+	speedup_cooldown_timer.connect("timeout", _on_speedup_cooldown_timer)
+	speedup_cooldown_timer.wait_time = speedup_cooldown_time
+	speedup_cooldown_timer.one_shot = true
+	speedup_cooldown_timer.autostart = false
+	add_child(speedup_cooldown_timer)
 
 
 func _on_tile_rotated(tile_coord: Vector2i, tile_reference: Tile, new_tile_id: Tile.TileID) -> void:
@@ -270,9 +328,58 @@ func _on_train_step() -> void:
 		each_train.move_to_next()
 
 
+func _on_speedup_cooldown_timer() -> void:
+	speedup_cooldown_active = false
+
+
+func _on_train_converted_to_blocks(new_block_positions: Array[Vector2i], block_colour: Color) -> void:
+	for block_coord in new_block_positions:
+		# TODO If block_coord is on a runway, disable it
+		tiles_reference[block_coord].convert_to_block(block_colour)
+		_update_barriers_for_tile(block_coord)
+		speedup_cooldown_timer.start()
+		speedup_cooldown_active = true
+	_attempt_clear()
+	spawn_train()
+
+
 func is_barriers_at_tile_in_direction(tile_pos: Vector2i, direction: Tile.Dir) -> bool:
 	var barrier_tile: Vector2i = tile_pos + Tile.DIR_TO_VECTOR[direction]
 	var barrier_ids: Array[Tile.Dir] = []
 	for barrier_ref in barriers_reference[barrier_tile]:
 		barrier_ids.append(barrier_ref.barrier_id)
 	return Tile.OPPOSITE_DIRS[direction] in barrier_ids
+
+
+func _regenerate_board() -> void:
+	# From bottom row, iterate upwards to both:
+	# logically move the reference down and
+	# physically move the Tile object down (with animation)
+	pass
+
+
+func clear_row(row: int) -> void:
+	for x in GRID_WIDTH:
+		tiles_reference[Vector2i(x, row)].clear_tile()
+		tiles_reference.erase(Vector2i(x, row))
+
+
+func _attempt_clear() -> void:
+	var rows_to_clear: Array[int]
+	var clearable_row: bool
+	for y in range(GRID_HEIGHT):
+		clearable_row = true  # Assume true and go false
+		for x in range(GRID_WIDTH):
+			if tiles_reference[Vector2i(x, y)].tile_id != Tile.TileID.BLOCK:
+				clearable_row = false
+		if clearable_row:
+			rows_to_clear.append(y)
+			
+	for row in rows_to_clear:
+		clear_row(row)
+	_regenerate_board()
+		
+
+func _debug_fill_almost_row() -> void:
+	for x in range(GRID_WIDTH - 1):
+		tiles_reference[Vector2i(x, 9)].convert_to_block(Color.WHITE)
