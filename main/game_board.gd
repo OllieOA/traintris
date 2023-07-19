@@ -18,6 +18,8 @@ const NUM_RUNWAYS: int = (GRID_WIDTH - 1) / 2
 const YOFFSET: int = RUNWAY_LENGTH * GRID_SIZE
 const GRID_START_Y: int = int(((BASE_RES_Y + YOFFSET) / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_HEIGHT) / 2)
 
+var available_runways = range(1, NUM_RUNWAYS)
+
 @onready var playable_area: NinePatchRect = $playable_area
 @onready var tiles: Node2D = $tiles
 @onready var barriers: Node2D = $barriers
@@ -255,7 +257,7 @@ func _on_tile_rotated(tile_coord: Vector2i, tile_reference: Tile, new_tile_id: T
 
 # Game progress stuff
 func spawn_train() -> void:
-	var runway_choice: int = randi_range(1, NUM_RUNWAYS)
+	var runway_choice: int = available_runways[randi() % available_runways.size()]
 	var new_train: Train = TRAIN_SCENE.instantiate()
 	new_train.game_board_reference = self
 	trains.add_child(new_train)
@@ -266,4 +268,11 @@ func spawn_train() -> void:
 func _on_train_step() -> void:
 	for each_train in trains.get_children():
 		each_train.move_to_next()
-		print("TRAIN UPDATE")
+
+
+func is_barriers_at_tile_in_direction(tile_pos: Vector2i, direction: Tile.Dir) -> bool:
+	var barrier_tile: Vector2i = tile_pos + Tile.DIR_TO_VECTOR[direction]
+	var barrier_ids: Array[Tile.Dir] = []
+	for barrier_ref in barriers_reference[barrier_tile]:
+		barrier_ids.append(barrier_ref.barrier_id)
+	return Tile.OPPOSITE_DIRS[direction] in barrier_ids

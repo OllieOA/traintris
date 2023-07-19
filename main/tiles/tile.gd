@@ -4,7 +4,7 @@ class_name Tile extends Node2D
 enum TileID {VERT, RIGHT_UP, LEFT_DOWN, HORIZ, LEFT_UP, RIGHT_DOWN, CROSS, EMPTY, BLOCK}
 
 # Helpers for direction consistency
-enum Dir {LEFT, DOWN, RIGHT, UP}
+enum Dir {LEFT, DOWN, RIGHT, UP, NULL}
 enum Rot {CLOCKWISE, ANTICLOCKWISE}
 
 const OPPOSITE_DIRS: Dictionary = {
@@ -12,6 +12,20 @@ const OPPOSITE_DIRS: Dictionary = {
 	Dir.RIGHT: Dir.LEFT,
 	Dir.UP: Dir.DOWN,
 	Dir.DOWN: Dir.UP
+}
+
+const DIR_TO_VECTOR: Dictionary = {
+	Dir.LEFT: Vector2i.LEFT,
+	Dir.RIGHT: Vector2i.RIGHT,
+	Dir.UP: Vector2i.UP,
+	Dir.DOWN: Vector2i.DOWN
+}
+
+const VECTOR_TO_DIR: Dictionary = {
+	Vector2i.LEFT: Dir.LEFT,
+	Vector2i.RIGHT: Dir.RIGHT,
+	Vector2i.UP: Dir.UP,
+	Vector2i.DOWN: Dir.DOWN
 }
 
 const TILE_ENTRY_EXIT_PAIRS: Dictionary = {

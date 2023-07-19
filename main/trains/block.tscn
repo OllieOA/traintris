@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cgay2jf0dc1d3"]
+
+[ext_resource type="Texture2D" uid="uid://bxy5mrvsg8oks" path="res://main/trains/train_block.png" id="1_fxy62"]
+
+[node name="block" type="Sprite2D" groups=["blocks"]]
+texture = ExtResource("1_fxy62")
+centered = false

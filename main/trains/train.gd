@@ -14,8 +14,9 @@ const TRAIN_DIRECTION_TO_VECTOR: Dictionary = {
 	Tile.Dir.RIGHT: Vector2i.RIGHT,
 	Tile.Dir.UP: Vector2i.UP,
 }
+const BLOCK_SCENE = preload("res://main/trains/block.tscn")
 
-var train_speed: float = 100.0
+var train_colour
 var caboose_grid_coord: Vector2i
 
 var num_carriages: int
@@ -29,7 +30,7 @@ func _ready() -> void:
 
 
 func generate_train(base_coord: Vector2i) -> void:
-	var train_colour = COLOUR_CHOICES[randi() % COLOUR_CHOICES.size()]
+	train_colour = COLOUR_CHOICES[randi() % COLOUR_CHOICES.size()]
 	var caboose_segment = TRAIN_SEGMENT_SCENE.instantiate()
 	segments_refs.append(caboose_segment)
 	caboose_segment.is_caboose = true
@@ -66,7 +67,20 @@ func generate_train(base_coord: Vector2i) -> void:
 		ref.move_to_current()
 
 
-func update_caboose_grid_coord(new_direction: Tile.Dir) -> void:
+func _update_segment_ref_sprites(segment_ref: TrainSegment) -> void:
+	if segment_ref.get_current_grid_location().y < 0:
+		segment_ref.update_segment_sprite(Tile.Dir.UP, Tile.Dir.DOWN)
+		return
+	
+	var exit_entry_pair = _get_direction_pair(
+		Tile.OPPOSITE_DIRS[segment_ref.get_current_train_direction()], segment_ref.get_current_grid_location()
+		)
+	var entry_dir = exit_entry_pair[0]
+	var exit_dir = exit_entry_pair[1]
+	segment_ref.update_segment_sprite(entry_dir, exit_dir)
+
+
+func update_caboose_grid_coord_logically(new_direction: Tile.Dir) -> void:
 	# Logicially update every segment
 	caboose_grid_coord = caboose_grid_coord + TRAIN_DIRECTION_TO_VECTOR[new_direction]
 	segments_refs[0].set_previous_grid_location(segments_refs[0].get_current_grid_location())
@@ -74,6 +88,8 @@ func update_caboose_grid_coord(new_direction: Tile.Dir) -> void:
 	
 	segments_refs[0].set_previous_train_direction(segments_refs[0].get_current_train_direction())
 	segments_refs[0].set_current_train_direction(new_direction)
+	
+	# Note here that direction is based on the direction after entering. 
 	
 	for i in range(1, len(segments_refs)):
 		segments_refs[i].set_previous_grid_location(segments_refs[i].get_current_grid_location())
@@ -83,12 +99,39 @@ func update_caboose_grid_coord(new_direction: Tile.Dir) -> void:
 		segments_refs[i].set_current_train_direction(segments_refs[i-1].get_previous_train_direction())
 
 
-	# Physically update every segment
+func update_all_segments_physically() -> void:
+	# Physically update every segment after logical updates
 	for ref in segments_refs:
 		ref.move_to_current()
+		_update_segment_ref_sprites(ref)
+
 
 func convert_train_to_blocks() -> void:
-	pass
+	var new_blocks: Array[Vector2i]
+	for ref in segments_refs:
+		var new_block = BLOCK_SCENE.instantiate()
+		new_blocks.append(ref.get_current_grid_location())
+		new_block.global_position = ref.global_position
+		game_board_reference.blocks.add_child(new_block)
+		new_block.modulate = train_colour
+		ref.queue_free()
+	SignalBus.emit_signal()
+
+
+func _get_direction_pair(
+	known_tile: Tile.Dir, grid_coord: Vector2i
+	) -> Array[Tile.Dir]:
+	var current_tile_id: Tile.TileID = game_board_reference.tiles_reference[grid_coord].tile_id
+	var connection_points = Tile.TILE_ENTRY_EXIT_PAIRS[current_tile_id].duplicate()
+
+	var operative_array: Array
+	for connection_pair in connection_points:
+		operative_array = connection_pair.duplicate()
+		operative_array.erase(known_tile)
+		if len(operative_array) == 1:  # We have identified the correct exit direction
+			return [known_tile, operative_array[0]]
+	
+	return [Tile.Dir.NULL, Tile.Dir.NULL]
 
 
 func move_to_next() -> void:
@@ -97,20 +140,24 @@ func move_to_next() -> void:
 	# Otherwise, move caboose to next location, and iterate everything behind it
 	# using update_caboose_grid_coord
 	if caboose_grid_coord.y < 0:
-		update_caboose_grid_coord(Tile.Dir.DOWN)
+		update_caboose_grid_coord_logically(Tile.Dir.DOWN)
+		update_all_segments_physically()
 		return
 	
 	var current_grid_coord = segments_refs[0].get_current_grid_location()
-	var current_connection_point = Tile.OPPOSITE_DIRS[segments_refs[0].get_current_train_direction()]
-	var current_tile_id: Tile.TileID = game_board_reference.tiles_reference[current_grid_coord].tile_id
-	var connection_points = Tile.TILE_ENTRY_EXIT_PAIRS[current_tile_id].duplicate()
-
-	var operative_array: Array
-	for connection_pair in connection_points:
-		operative_array = connection_pair.duplicate()
-		operative_array.erase(current_connection_point)
-		if len(operative_array) == 1:  # We have identified the correct exit direction
-			update_caboose_grid_coord(operative_array[0])
-			return
+	var tile_entry_point = Tile.OPPOSITE_DIRS[segments_refs[0].get_current_train_direction()]
+	var paired_points = _get_direction_pair(tile_entry_point, current_grid_coord)
 	
-	pass
+	# Before updating physically, check if train is blocked by finding a barrier 
+	# in the direction of the caboose
+	
+	update_caboose_grid_coord_logically(paired_points[1])
+	if game_board_reference.is_barriers_at_tile_in_direction(
+		segments_refs[0].get_previous_grid_location(), segments_refs[0].get_current_train_direction()
+		):
+		
+		convert_train_to_blocks()
+		queue_free()
+		return
+	print("MOVING TRAIN")
+	update_all_segments_physically()

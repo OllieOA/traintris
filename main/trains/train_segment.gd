@@ -20,6 +20,22 @@ var current_grid_location: Vector2i : set = set_current_grid_location, get = get
 # TODO: Add animations to sprite sheets
 var active_sprites: Array[Sprite2D] = []
 
+var segment_direction_to_spriteframe: Dictionary = {
+	"%d%d" % [Tile.Dir.RIGHT, Tile.Dir.LEFT]: 0,
+	"%d%d" % [Tile.Dir.UP, Tile.Dir.DOWN]: 1,
+	"%d%d" % [Tile.Dir.LEFT, Tile.Dir.RIGHT]: 2,
+	"%d%d" % [Tile.Dir.DOWN, Tile.Dir.UP]: 3,
+	"%d%d" % [Tile.Dir.RIGHT, Tile.Dir.UP]: 4,
+	"%d%d" % [Tile.Dir.UP, Tile.Dir.LEFT]: 5,
+	"%d%d" % [Tile.Dir.LEFT, Tile.Dir.DOWN]: 6,
+	"%d%d" % [Tile.Dir.DOWN, Tile.Dir.RIGHT]: 7,
+	"%d%d" % [Tile.Dir.DOWN, Tile.Dir.LEFT]: 8,
+	"%d%d" % [Tile.Dir.RIGHT, Tile.Dir.DOWN]: 9,
+	"%d%d" % [Tile.Dir.UP, Tile.Dir.RIGHT]: 10,
+	"%d%d" % [Tile.Dir.LEFT, Tile.Dir.UP]: 11,
+			
+}
+
 func _ready() -> void:
 	if is_caboose:
 		caboose_spritesheet_solid.show()
@@ -39,13 +55,18 @@ func move_to_current() -> void:
 	var new_x = GameBoard.GRID_START_X + GameBoard.GRID_SIZE * get_current_grid_location().x
 	var new_y = GameBoard.GRID_START_Y + GameBoard.GRID_SIZE * get_current_grid_location().y
 	position = Vector2i(new_x, new_y)
-	# TODO: Update direction
+
+
+func update_segment_sprite(entry_location: Tile.Dir, exit_location: Tile.Dir) -> void:
+	if entry_location == Tile.Dir.NULL:
+		return
+	var new_frame_key = "%d%d" % [entry_location, exit_location]
+	for sprite in active_sprites:
+		sprite.frame = segment_direction_to_spriteframe[new_frame_key]
 
 
 func set_current_train_direction(new_direction: Tile.Dir) -> void:
 	current_train_direction = new_direction
-	for sprite in active_sprites:
-		sprite.frame = current_train_direction
 
 
 func get_current_train_direction() -> Tile.Dir:
