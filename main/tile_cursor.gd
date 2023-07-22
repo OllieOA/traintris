@@ -36,7 +36,6 @@ func move_cursor_grid_with_animate(new_dir: Vector2i, is_keyboard: bool) -> Vect
 			
 	var tween = get_tree().create_tween()
 	tween.tween_property(self, "global_position", target_position, 0.02).set_ease(Tween.EASE_IN)
-#	global_position = target_position
 	tween.play()
 	grid_coord = target_grid_coord
 	return grid_coord

@@ -1,7 +1,64 @@
-[gd_scene format=3 uid="uid://cpk4k0bwsw8kl"]
+[gd_scene load_steps=4 format=3 uid="uid://cpk4k0bwsw8kl"]
+
+[ext_resource type="LabelSettings" uid="uid://dpe68dbrt0jf3" path="res://ui/fonts/level_label_settings.tres" id="1_74ow2"]
+[ext_resource type="Script" path="res://ui/main_game_ui.gd" id="1_h84fn"]
+[ext_resource type="Theme" uid="uid://bwpba1tj35x2m" path="res://ui/themes/level_container.tres" id="1_hf4ql"]
 
 [node name="main_game_ui" type="CanvasLayer"]
+script = ExtResource("1_h84fn")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="ScorePanel" type="PanelContainer" parent="."]
+offset_left = 10.0
+offset_top = 5.0
+offset_right = 99.0
+offset_bottom = 98.0
+theme = ExtResource("1_hf4ql")
+
+[node name="ScoreContainer" type="MarginContainer" parent="ScorePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
+
+[node name="ScoreOrganiser" type="VBoxContainer" parent="ScorePanel/ScoreContainer"]
+layout_mode = 2
+
+[node name="LevelContainer" type="HBoxContainer" parent="ScorePanel/ScoreContainer/ScoreOrganiser"]
+layout_mode = 2
+
+[node name="LevelLabel" type="Label" parent="ScorePanel/ScoreContainer/ScoreOrganiser/LevelContainer"]
+layout_mode = 2
+text = "Level:"
+label_settings = ExtResource("1_74ow2")
+horizontal_alignment = 2
+
+[node name="LevelValue" type="Label" parent="ScorePanel/ScoreContainer/ScoreOrganiser/LevelContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "10"
+label_settings = ExtResource("1_74ow2")
+
+[node name="TotalScoreContainer" type="HBoxContainer" parent="ScorePanel/ScoreContainer/ScoreOrganiser"]
+layout_mode = 2
+
+[node name="TotalScoreLabel" type="Label" parent="ScorePanel/ScoreContainer/ScoreOrganiser/TotalScoreContainer"]
+layout_mode = 2
+text = "Score:"
+
+[node name="TotalScoreValue" type="Label" parent="ScorePanel/ScoreContainer/ScoreOrganiser/TotalScoreContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "3000"
+
+[node name="NextLevelContainer" type="HBoxContainer" parent="ScorePanel/ScoreContainer/ScoreOrganiser"]
+layout_mode = 2
+
+[node name="NextLevelLabel" type="Label" parent="ScorePanel/ScoreContainer/ScoreOrganiser/NextLevelContainer"]
+layout_mode = 2
+text = "Next:"
+
+[node name="NextLevelValue" type="Label" parent="ScorePanel/ScoreContainer/ScoreOrganiser/NextLevelContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "3000"

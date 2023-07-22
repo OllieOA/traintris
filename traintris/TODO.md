@@ -17,14 +17,17 @@
 - [x] Add "switchback" tiles
 ## UI
 - [ ] Add levels (seasons) widget
-- [ ] Add score widget
+- [x] Add score widget
 - [ ] Add high score saving
 - [ ] Add points remaining for next level
 - [ ] Add status for level length
 - [ ] Add tutorial
 - [ ] Add main menu
+- [ ] Add settings
+	- [ ] Font setting
+	- [ ] Keyboard layout setting
+	- [ ] Sound setting
 - [ ] Add start level selector
-- [ ] Add different keyboard layouts
 - [ ] Add exclamation points when 1 away from barrier
 ## Game
 - [ ] Increase speed based on level

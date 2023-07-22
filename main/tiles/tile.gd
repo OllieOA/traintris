@@ -39,7 +39,7 @@ const TILE_ENTRY_EXIT_PAIRS: Dictionary = {
 	TileID.BLOCK: [],  # Will be converted
 	TileID.CLEARED: [],
 	TileID.LEFT_SWITCHBACK: [[Dir.UP, Dir.LEFT], [Dir.RIGHT, Dir.DOWN]],
-	TileID.RIGHT_SWITCHBACK: [[Dir.UP, Dir.RIGHT], [Dir.RIGHT, Dir.UP]],
+	TileID.RIGHT_SWITCHBACK: [[Dir.UP, Dir.RIGHT], [Dir.LEFT, Dir.UP]],
 	TileID.EMPTY: [],  # Should not be reachable
 }
 
@@ -78,6 +78,7 @@ var tile_rect: Rect2
 
 @onready var tile_sprite: Sprite2D = $tile_sprite
 @onready var block_sprite: Sprite2D = $block_sprite
+@onready var label: Label = $Label
 
 func _ready():
 	tile_id = tile_sprite.frame
@@ -131,6 +132,15 @@ func clear_tile() -> void:
 	queue_free()
 
 
+func animate_to_location(new_location: Vector2, delay: float, new_tile_coord) -> void:
+	var transition_duration: float = 0.1
+	var move_tween = get_tree().create_tween()
+	move_tween.tween_property(self, "global_position", new_location, transition_duration).set_delay(delay).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	move_tween.play()
+	await move_tween.finished
+	set_tile_coord(new_tile_coord)  # Resets coord and selectable rect
+
+
 # Flag setters and getters
 func set_is_rotatable(val: bool) -> void:
 	is_rotatable = val
@@ -146,9 +156,7 @@ func set_is_selected(val: bool) -> void:
 
 func set_tile(new_tile_id: TileID) -> void:
 	if new_tile_id not in TileID.values():
-		print("CANNOT SET TO " + str(new_tile_id))
 		return
-
 	tile_id = new_tile_id
 	tile_sprite.frame = new_tile_id
 
@@ -159,6 +167,8 @@ func get_tile() -> TileID:
 
 func set_tile_coord(new_tile_coord: Vector2i) -> void:
 	tile_coord = new_tile_coord
+	label.text = str(tile_coord)
+	tile_rect = Rect2(global_position, tile_sprite.get_rect().size)
 
 
 func get_tile_coord() -> Vector2i:

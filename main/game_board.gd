@@ -19,8 +19,9 @@ const RUNWAY_LENGTH: int = 4
 const NUM_RUNWAYS: int = (GRID_WIDTH - 1) / 2
 const YOFFSET: int = RUNWAY_LENGTH * GRID_SIZE
 const GRID_START_Y: int = GRID_Y_OFFSET + int(((BASE_RES_Y + YOFFSET) / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_HEIGHT) / 2)
+const TILE_SPAWN_START: Vector2i = Vector2i(GRID_START_X, 0 - GRID_SIZE)
 
-enum DEBUG_BOARD {NONE, TEST_CLEAR_1, TEST_CLEAR_4}
+enum DEBUG_BOARD {NONE, TEST_CLEAR_1, TEST_CLEAR_4, TEST_CLEAR_SPLIT_3}
 
 var available_runways = range(1, NUM_RUNWAYS)
 
@@ -34,6 +35,8 @@ var available_runways = range(1, NUM_RUNWAYS)
 
 var new_tile: Tile
 var current_active_tile: Tile
+var rows_to_clear: Array[int]
+var modifiers: Array = []
 
 var tiles_reference: Dictionary = {}
 var barriers_reference: Dictionary = {}
@@ -193,13 +196,13 @@ func _create_clearable_board(num_clearable_rows: int) -> void:
 			tiles_reference[new_tile_coord] = new_tile
 			new_tile.set_tile_coord(new_tile_coord)
 			new_tile.set_tile(Tile.TileID.VERT)
-			barriers_reference[new_tile_coord] = []
 
 	for x in range(GRID_WIDTH):
-		for y in range(GRID_HEIGHT - num_clearable_rows, GRID_HEIGHT):
+		for y in range(GRID_HEIGHT - num_clearable_rows - 2, GRID_HEIGHT - 2):
 			if x == 1:
 				continue
-			tiles_reference[Vector2i(x, y)].convert_to_block(Color.WHITE)
+			tiles_reference[Vector2i(x, y)].convert_to_block(Color.DIM_GRAY)
+
 
 func _create_board(debug_option: DEBUG_BOARD = DEBUG_BOARD.NONE) -> void:
 	match debug_option:
@@ -328,6 +331,11 @@ func _update_barriers_for_tile(tile_pos: Vector2i) -> void:
 
 
 func _create_barriers() -> void:
+	for barrier_list in barriers_reference.values():
+		for barrier_ref in barrier_list:
+			barrier_ref.queue_free()
+	for tile_pos in tiles_reference.keys():
+		barriers_reference[tile_pos] = []
 	for tile_pos in tiles_reference.keys():
 		_update_barriers_for_tile(tile_pos)
 
@@ -378,7 +386,6 @@ func _on_train_converted_to_blocks(new_block_positions: Array[Vector2i], block_c
 		speedup_cooldown_timer.start()
 		speedup_cooldown_active = true
 	_attempt_clear()
-	spawn_train()
 
 
 func is_barriers_at_tile_in_direction(tile_pos: Vector2i, direction: Tile.Dir) -> bool:
@@ -389,11 +396,61 @@ func is_barriers_at_tile_in_direction(tile_pos: Vector2i, direction: Tile.Dir) -
 	return Tile.OPPOSITE_DIRS[direction] in barrier_ids
 
 
+func _get_global_position_from_grid_coord(grid_coord: Vector2i) -> Vector2i:
+	return Vector2i(GRID_START_X + grid_coord.x * GRID_SIZE, GRID_START_Y + grid_coord.y * GRID_SIZE)
+
+
 func _regenerate_board() -> void:
+	const TILE_MOVE_DELAY = 0.05
 	# From bottom row, iterate upwards to both:
 	# logically move the reference down and
-	# physically move the Tile object down (with animation)
-	pass
+	# physically move the Tile object down (with animation called on reference)
+
+	# Using rows_to_clear...
+	var num_rows_to_drop = 0  # Increment this bottom-up
+	var rows_to_drop_required: Dictionary = {}
+	
+	for y in range(GRID_HEIGHT - 1, -1, -1):
+		rows_to_drop_required[y] = num_rows_to_drop
+		if y in rows_to_clear:
+			num_rows_to_drop += 1
+			continue
+
+	# Now plan the moves and move them
+	var moves: Dictionary = {}  # Moves for planning
+	for y in range(GRID_HEIGHT):
+		for x in range(GRID_WIDTH):
+			if y in rows_to_clear:
+				continue  # Nothing to move
+			var old_coord = Vector2i(x, y)
+			var new_coord = Vector2i(x, y + rows_to_drop_required[y])
+			if old_coord == new_coord:
+				continue  # No move to make
+
+			var tile_ref: Tile = tiles_reference.get(Vector2i(x, y))
+			moves[tile_ref] = [new_coord, x, old_coord]
+			
+	for tile_ref in moves.keys():
+		tiles_reference[moves[tile_ref][0]] = tile_ref
+		var new_global_pos: Vector2i = _get_global_position_from_grid_coord(moves[tile_ref][0])
+		tile_ref.animate_to_location(new_global_pos, TILE_MOVE_DELAY * moves[tile_ref][1], moves[tile_ref][0])
+		for barrier_ref in barriers_reference[moves[tile_ref][2]]:
+			barrier_ref.animate_to_location(new_global_pos, TILE_MOVE_DELAY * moves[tile_ref][1])
+
+	# Spawn new tiles at the top
+	for y in range(num_rows_to_drop):
+		for x in range(GRID_WIDTH):
+			new_tile = TILE_SCENE.instantiate()
+			new_tile.global_position = Vector2(GRID_START_X + x * GRID_SIZE, TILE_SPAWN_START.y - GRID_SIZE * num_rows_to_drop + y * GRID_SIZE)
+			tiles.add_child(new_tile)
+			var new_tile_coord: Vector2i = Vector2i(x, y)
+			var new_tile_position = _get_global_position_from_grid_coord(new_tile_coord)
+			new_tile.animate_to_location(new_tile_position, TILE_MOVE_DELAY * x, new_tile_coord)
+			tiles_reference[new_tile_coord] = new_tile
+	
+	# Rebuild all barriers
+	_create_barriers()
+	spawn_train()
 
 
 func clear_row(row: int) -> void:
@@ -403,7 +460,7 @@ func clear_row(row: int) -> void:
 
 
 func _attempt_clear() -> void:
-	var rows_to_clear: Array[int]
+	rows_to_clear = []
 	var clearable_row: bool
 	for y in range(GRID_HEIGHT):
 		clearable_row = true  # Assume true and go false
@@ -415,4 +472,5 @@ func _attempt_clear() -> void:
 			
 	for row in rows_to_clear:
 		clear_row(row)
+	SignalBus.emit_signal("rows_cleared", len(rows_to_clear), modifiers)
 	_regenerate_board()
