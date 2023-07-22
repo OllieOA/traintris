@@ -11,7 +11,7 @@ script = ExtResource("1_rt1vl")
 texture = ExtResource("2_s7pbq")
 centered = false
 hframes = 3
-vframes = 3
+vframes = 4
 
 [node name="block_sprite" type="Sprite2D" parent="."]
 visible = false

@@ -1,7 +1,7 @@
 class_name Tile extends Node2D
 
 # This enum sets up the names in order of the frames in the sprite
-enum TileID {VERT, RIGHT_UP, LEFT_DOWN, HORIZ, LEFT_UP, RIGHT_DOWN, CROSS, EMPTY, BLOCK, CLEARED}
+enum TileID {VERT, RIGHT_UP, LEFT_DOWN, HORIZ, LEFT_UP, RIGHT_DOWN, CROSS, CLEARED, BLOCK, LEFT_SWITCHBACK, RIGHT_SWITCHBACK, EMPTY}
 
 # Helpers for direction consistency
 enum Dir {LEFT, DOWN, RIGHT, UP, NULL}
@@ -36,8 +36,11 @@ const TILE_ENTRY_EXIT_PAIRS: Dictionary = {
 	TileID.LEFT_UP: [[Dir.LEFT, Dir.UP]],
 	TileID.RIGHT_DOWN: [[Dir.RIGHT, Dir.DOWN]],
 	TileID.CROSS: [[Dir.RIGHT, Dir.LEFT], [Dir.UP, Dir.DOWN]],
+	TileID.BLOCK: [],  # Will be converted
+	TileID.CLEARED: [],
+	TileID.LEFT_SWITCHBACK: [[Dir.UP, Dir.LEFT], [Dir.RIGHT, Dir.DOWN]],
+	TileID.RIGHT_SWITCHBACK: [[Dir.UP, Dir.RIGHT], [Dir.RIGHT, Dir.UP]],
 	TileID.EMPTY: [],  # Should not be reachable
-	TileID.BLOCK: []  # Will be converted
 }
 
 const CLOCKWISE_ROTATION_DEFINITIONS: Dictionary = {
@@ -48,7 +51,9 @@ const CLOCKWISE_ROTATION_DEFINITIONS: Dictionary = {
 	TileID.RIGHT_UP: TileID.RIGHT_DOWN,
 	TileID.LEFT_DOWN: TileID.LEFT_UP,
 	TileID.LEFT_UP: TileID.RIGHT_UP,
-	TileID.RIGHT_DOWN: TileID.LEFT_DOWN
+	TileID.RIGHT_DOWN: TileID.LEFT_DOWN,
+	TileID.LEFT_SWITCHBACK: TileID.RIGHT_SWITCHBACK,
+	TileID.RIGHT_SWITCHBACK: TileID.LEFT_SWITCHBACK
 }
 
 const ANTICLOCKWISE_ROTATION_DEFINITIONS: Dictionary = {
@@ -59,7 +64,9 @@ const ANTICLOCKWISE_ROTATION_DEFINITIONS: Dictionary = {
 	TileID.RIGHT_UP: TileID.LEFT_UP,
 	TileID.LEFT_DOWN: TileID.RIGHT_DOWN,
 	TileID.LEFT_UP: TileID.LEFT_DOWN,
-	TileID.RIGHT_DOWN: TileID.RIGHT_UP
+	TileID.RIGHT_DOWN: TileID.RIGHT_UP,
+	TileID.LEFT_SWITCHBACK: TileID.RIGHT_SWITCHBACK,
+	TileID.RIGHT_SWITCHBACK: TileID.LEFT_SWITCHBACK
 }
 
 var tile_id: TileID : set = set_tile, get = get_tile
@@ -86,7 +93,6 @@ func _process(_delta: float) -> void:
 	
 	elif Input.is_action_just_pressed("rotate_clockwise"):
 		rotate_tilewise(Rot.CLOCKWISE)
-	
 
 
 func rotate_tilewise(direction: int) -> bool:

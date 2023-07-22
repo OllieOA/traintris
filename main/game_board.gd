@@ -10,13 +10,17 @@ const SCREEN_SCALING_FACTOR: float = 2
 
 const GRID_SIZE: int = 16
 const GRID_WIDTH: int = 7
-const GRID_HEIGHT: int = 12
-const GRID_START_X: int = int((BASE_RES_X / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_WIDTH) / 2)
+const GRID_HEIGHT: int = 13
+const GRID_X_OFFSET: int = BASE_RES_X / 10
+const GRID_Y_OFFSET: int = BASE_RES_Y / 30
+const GRID_START_X: int = GRID_X_OFFSET + int((BASE_RES_X / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_WIDTH) / 2)
 
-const RUNWAY_LENGTH: int = 5
+const RUNWAY_LENGTH: int = 4
 const NUM_RUNWAYS: int = (GRID_WIDTH - 1) / 2
 const YOFFSET: int = RUNWAY_LENGTH * GRID_SIZE
-const GRID_START_Y: int = int(((BASE_RES_Y + YOFFSET) / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_HEIGHT) / 2)
+const GRID_START_Y: int = GRID_Y_OFFSET + int(((BASE_RES_Y + YOFFSET) / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_HEIGHT) / 2)
+
+enum DEBUG_BOARD {NONE, TEST_CLEAR_1, TEST_CLEAR_4}
 
 var available_runways = range(1, NUM_RUNWAYS)
 
@@ -46,9 +50,10 @@ var speedup_active: bool = false
 var speedup_cooldown_active: bool = false
 
 func _ready() -> void:
+	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.TEST_CLEAR_4
 	randomize()
 	_create_playable_area()
-	_create_board()
+	_create_board(debug_mode)
 	_create_barriers()
 	# Set cursor
 	tile_cursor.initialise_cursor()
@@ -56,9 +61,11 @@ func _ready() -> void:
 	current_active_tile.set_is_selected(true)
 	SignalBus.connect("tile_rotated", _on_tile_rotated)
 	SignalBus.connect("train_converted_to_blocks", _on_train_converted_to_blocks)
-	spawn_train()
+	if debug_mode == DEBUG_BOARD.TEST_CLEAR_1 or debug_mode == DEBUG_BOARD.TEST_CLEAR_4:
+		spawn_train(1)
+	else:
+		spawn_train()
 	_create_train_timer()
-	_debug_fill_almost_row()
 
 
 func _process(_delta: float) -> void:
@@ -131,7 +138,7 @@ func sum_array(array: Array) -> float:
 		return n
 
 
-func _create_board() -> void:
+func _create_standard_board() -> void:
 	for x in range(GRID_WIDTH):
 		for y in range(GRID_HEIGHT):
 			new_tile = TILE_SCENE.instantiate()
@@ -152,7 +159,9 @@ func _create_board() -> void:
 		Tile.TileID.LEFT_UP: 0.9,
 		Tile.TileID.RIGHT_UP: 0.9,
 		Tile.TileID.LEFT_DOWN: 0.9,
-		Tile.TileID.RIGHT_DOWN: 0.9
+		Tile.TileID.RIGHT_DOWN: 0.9,
+		Tile.TileID.RIGHT_SWITCHBACK: 0.4,
+		Tile.TileID.LEFT_SWITCHBACK: 0.4
 	}
 	
 	var accumulated_weights: Dictionary = {}
@@ -173,7 +182,35 @@ func _create_board() -> void:
 				tile_ref.set_tile(tile_id)
 				break
 
-	# Add in runway
+
+func _create_clearable_board(num_clearable_rows: int) -> void:
+	for x in range(GRID_WIDTH):
+		for y in range(GRID_HEIGHT):
+			new_tile = TILE_SCENE.instantiate()
+			new_tile.global_position = Vector2(GRID_START_X + x * GRID_SIZE, GRID_START_Y + y * GRID_SIZE)
+			tiles.add_child(new_tile)
+			var new_tile_coord: Vector2i = Vector2i(x, y)
+			tiles_reference[new_tile_coord] = new_tile
+			new_tile.set_tile_coord(new_tile_coord)
+			new_tile.set_tile(Tile.TileID.VERT)
+			barriers_reference[new_tile_coord] = []
+
+	for x in range(GRID_WIDTH):
+		for y in range(GRID_HEIGHT - num_clearable_rows, GRID_HEIGHT):
+			if x == 1:
+				continue
+			tiles_reference[Vector2i(x, y)].convert_to_block(Color.WHITE)
+
+func _create_board(debug_option: DEBUG_BOARD = DEBUG_BOARD.NONE) -> void:
+	match debug_option:
+		DEBUG_BOARD.NONE:
+			_create_standard_board()
+		DEBUG_BOARD.TEST_CLEAR_1:
+			_create_clearable_board(1)
+		DEBUG_BOARD.TEST_CLEAR_4:
+			_create_clearable_board(4)
+
+	# Add in runway (always)
 	var runway_pos: Vector2i
 	var runway_y_offset = GRID_START_Y - (RUNWAY_LENGTH - 1) * GRID_SIZE
 	for x in range(1, GRID_WIDTH, 2):
@@ -314,8 +351,9 @@ func _on_tile_rotated(tile_coord: Vector2i, tile_reference: Tile, new_tile_id: T
 
 
 # Game progress stuff
-func spawn_train() -> void:
-	var runway_choice: int = available_runways[randi() % available_runways.size()]
+func spawn_train(runway_choice: int = -1) -> void:
+	if runway_choice == -1:  # Invalid default
+		runway_choice = available_runways[randi() % available_runways.size()]
 	var new_train: Train = TRAIN_SCENE.instantiate()
 	new_train.game_board_reference = self
 	trains.add_child(new_train)
@@ -378,8 +416,3 @@ func _attempt_clear() -> void:
 	for row in rows_to_clear:
 		clear_row(row)
 	_regenerate_board()
-		
-
-func _debug_fill_almost_row() -> void:
-	for x in range(GRID_WIDTH - 1):
-		tiles_reference[Vector2i(x, 9)].convert_to_block(Color.WHITE)

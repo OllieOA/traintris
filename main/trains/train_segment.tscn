@@ -17,6 +17,7 @@ position = Vector2(-16, -16)
 texture = ExtResource("2_kx2u5")
 centered = false
 hframes = 12
+frame = 1
 
 [node name="caboose_spritesheet_uncoloured" type="Sprite2D" parent="."]
 visible = false
@@ -25,6 +26,7 @@ position = Vector2(-16, -16)
 texture = ExtResource("3_p886b")
 centered = false
 hframes = 12
+frame = 1
 
 [node name="fuel_spritesheet_solid" type="Sprite2D" parent="."]
 visible = false
@@ -32,6 +34,7 @@ position = Vector2(-16, -16)
 texture = ExtResource("4_xs8l2")
 centered = false
 hframes = 12
+frame = 1
 
 [node name="fuel_spritesheet_uncoloured" type="Sprite2D" parent="."]
 visible = false
@@ -39,6 +42,7 @@ position = Vector2(-16, -16)
 texture = ExtResource("5_xyiah")
 centered = false
 hframes = 12
+frame = 1
 
 [node name="carriage_spritesheet_solid" type="Sprite2D" parent="."]
 visible = false
@@ -46,6 +50,7 @@ position = Vector2(-16, -16)
 texture = ExtResource("6_041rh")
 centered = false
 hframes = 12
+frame = 1
 
 [node name="carriage_spritesheet_uncoloured" type="Sprite2D" parent="."]
 visible = false
@@ -53,3 +58,4 @@ position = Vector2(-16, -16)
 texture = ExtResource("7_kf5ko")
 centered = false
 hframes = 12
+frame = 1
