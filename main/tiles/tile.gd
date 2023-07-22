@@ -78,7 +78,6 @@ var tile_rect: Rect2
 
 @onready var tile_sprite: Sprite2D = $tile_sprite
 @onready var block_sprite: Sprite2D = $block_sprite
-@onready var label: Label = $Label
 
 func _ready():
 	tile_id = tile_sprite.frame
@@ -167,7 +166,6 @@ func get_tile() -> TileID:
 
 func set_tile_coord(new_tile_coord: Vector2i) -> void:
 	tile_coord = new_tile_coord
-	label.text = str(tile_coord)
 	tile_rect = Rect2(global_position, tile_sprite.get_rect().size)
 
 

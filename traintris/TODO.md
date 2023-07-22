@@ -8,11 +8,11 @@
 - [x] Select tile sprites
 - [x] Generate board at runtime
 - [x] Add dynamic barriers to tiles
-- [ ] Refactor tiles to be programatically settable
+- [x] Refactor tiles to be programatically settable
 - [ ] Add mountain source for runways
 - [ ] Add in props around the cleared board area (generative?)
 - [x] Create debug boards for testing
-- [ ] Clear board on full line match
+- [x] Clear board on full line match
 - [ ] Remove runways when trains stop on one
 - [x] Add "switchback" tiles
 ## UI
@@ -41,7 +41,7 @@
 - [ ] Add train "squash" animation
 - [ ] Add frog/pond in the bottom corner
 - [ ] Make a twist on the Tetris theme
-- [ ] Add clearing animation
+- [ ] Add clearing animation (horizontal swipe or particles)
 ## Bug
 - [x] Fix coal truck wheels
 - [ ] Train can roll over blocks (should be fixed by runway handling)
