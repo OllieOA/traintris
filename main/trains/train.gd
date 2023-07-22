@@ -25,7 +25,7 @@ var game_board_reference: GameBoard
 
 
 func _ready() -> void:
-	num_carriages = randi_range(2, 5)
+	num_carriages = randi_range(GameControl.min_train_length, GameControl.max_train_length)
 
 
 func generate_train(base_coord: Vector2i) -> void:
@@ -107,10 +107,12 @@ func update_all_segments_physically() -> void:
 
 func convert_train_to_blocks() -> void:
 	var new_block_positions: Array[Vector2i]
+	var train_length = len(segments_refs)
 	for ref in segments_refs:
 		new_block_positions.append(ref.get_previous_grid_location())
 		ref.queue_free()
 	SignalBus.emit_signal("train_converted_to_blocks", new_block_positions, train_colour)
+	GameScore.add_to_score(int(2 * train_length))
 
 
 func _get_direction_pair(
@@ -149,7 +151,7 @@ func move_to_next() -> void:
 	update_caboose_grid_coord_logically(paired_points[1])
 	if game_board_reference.is_barriers_at_tile_in_direction(
 		segments_refs[0].get_previous_grid_location(), segments_refs[0].get_current_train_direction()
-		):
+	):
 		convert_train_to_blocks()
 		queue_free()
 		return

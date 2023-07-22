@@ -39,7 +39,7 @@ const TILE_ENTRY_EXIT_PAIRS: Dictionary = {
 	TileID.BLOCK: [],  # Will be converted
 	TileID.CLEARED: [],
 	TileID.LEFT_SWITCHBACK: [[Dir.UP, Dir.LEFT], [Dir.RIGHT, Dir.DOWN]],
-	TileID.RIGHT_SWITCHBACK: [[Dir.UP, Dir.RIGHT], [Dir.LEFT, Dir.UP]],
+	TileID.RIGHT_SWITCHBACK: [[Dir.UP, Dir.RIGHT], [Dir.LEFT, Dir.DOWN]],
 	TileID.EMPTY: [],  # Should not be reachable
 }
 
@@ -78,6 +78,7 @@ var tile_rect: Rect2
 
 @onready var tile_sprite: Sprite2D = $tile_sprite
 @onready var block_sprite: Sprite2D = $block_sprite
+@onready var tunnel_sprite: Sprite2D = $tunnel_sprite
 
 func _ready():
 	tile_id = tile_sprite.frame
@@ -171,3 +172,7 @@ func set_tile_coord(new_tile_coord: Vector2i) -> void:
 
 func get_tile_coord() -> Vector2i:
 	return tile_coord
+
+
+func show_tunnel() -> void:
+	tunnel_sprite.show()

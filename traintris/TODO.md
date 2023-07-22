@@ -4,22 +4,23 @@
 - [x] Create train movement
 - [x] Train creates blocks on stop
 - [x] Add train speedup control
+- [ ] Add check of other segment present on board
 ## Board
 - [x] Select tile sprites
 - [x] Generate board at runtime
 - [x] Add dynamic barriers to tiles
 - [x] Refactor tiles to be programatically settable
-- [ ] Add mountain source for runways
+- [x] Add mountain source for runways
 - [ ] Add in props around the cleared board area (generative?)
 - [x] Create debug boards for testing
 - [x] Clear board on full line match
 - [ ] Remove runways when trains stop on one
 - [x] Add "switchback" tiles
 ## UI
-- [ ] Add levels (seasons) widget
+- [x] Add levels (seasons) widget
 - [x] Add score widget
 - [ ] Add high score saving
-- [ ] Add points remaining for next level
+- [x] Add points remaining for next level
 - [ ] Add status for level length
 - [ ] Add tutorial
 - [ ] Add main menu
@@ -30,11 +31,12 @@
 - [ ] Add start level selector
 - [ ] Add exclamation points when 1 away from barrier
 ## Game
-- [ ] Increase speed based on level
+- [x] Increase speed based on level
 - [ ] Increase min/max train length with levels
 - [ ] Add sound prompt for trains (chuggachugga)
 - [ ] Add butler upload pipeline for project
 - [ ] Add powerups for score multiplication/addition
+- [ ] Refactor all spawning to "falling"
 ## Juice
 - [ ] Add season modifiers (change colour, add particles)
 - [ ] Add barrier setup to tunnel/crashed out tunnel

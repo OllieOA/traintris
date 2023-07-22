@@ -15,7 +15,7 @@ const GRID_X_OFFSET: int = BASE_RES_X / 10
 const GRID_Y_OFFSET: int = BASE_RES_Y / 30
 const GRID_START_X: int = GRID_X_OFFSET + int((BASE_RES_X / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_WIDTH) / 2)
 
-const RUNWAY_LENGTH: int = 4
+const RUNWAY_LENGTH: int = 5
 const NUM_RUNWAYS: int = (GRID_WIDTH - 1) / 2
 const YOFFSET: int = RUNWAY_LENGTH * GRID_SIZE
 const GRID_START_Y: int = GRID_Y_OFFSET + int(((BASE_RES_Y + YOFFSET) / SCREEN_SCALING_FACTOR - GRID_SIZE * GRID_HEIGHT) / 2)
@@ -32,6 +32,22 @@ var available_runways = range(1, NUM_RUNWAYS)
 @onready var runway: Node2D = $runway
 @onready var tile_cursor: Sprite2D = $tile_cursor
 @onready var blocks: Node2D = $blocks
+@onready var mountain: Sprite2D = $mountain
+
+const selection_weights: Dictionary = {
+	Tile.TileID.VERT: 0.6,
+	Tile.TileID.HORIZ: 0.6,
+	Tile.TileID.CROSS: 0.75,
+	Tile.TileID.LEFT_UP: 0.5,
+	Tile.TileID.RIGHT_UP: 0.5,
+	Tile.TileID.LEFT_DOWN: 0.5,
+	Tile.TileID.RIGHT_DOWN: 0.5,
+	Tile.TileID.RIGHT_SWITCHBACK: 0.75,
+	Tile.TileID.LEFT_SWITCHBACK: 0.75
+}
+
+var accumulated_weights: Dictionary
+var overall_weight: float
 
 var new_tile: Tile
 var current_active_tile: Tile
@@ -53,10 +69,11 @@ var speedup_active: bool = false
 var speedup_cooldown_active: bool = false
 
 func _ready() -> void:
-	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.TEST_CLEAR_4
+#	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.TEST_CLEAR_4
+	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.NONE
 	randomize()
 	_create_playable_area()
-	_create_board(debug_mode)
+	_create_board()
 	_create_barriers()
 	# Set cursor
 	tile_cursor.initialise_cursor()
@@ -64,6 +81,7 @@ func _ready() -> void:
 	current_active_tile.set_is_selected(true)
 	SignalBus.connect("tile_rotated", _on_tile_rotated)
 	SignalBus.connect("train_converted_to_blocks", _on_train_converted_to_blocks)
+	GameScore.connect("level_reached", _on_level_reached)
 	if debug_mode == DEBUG_BOARD.TEST_CLEAR_1 or debug_mode == DEBUG_BOARD.TEST_CLEAR_4:
 		spawn_train(1)
 	else:
@@ -141,6 +159,25 @@ func sum_array(array: Array) -> float:
 		return n
 
 
+func _setup_random_weights() -> void:
+	accumulated_weights = {}
+	var tracked_weight = 0.0
+	for tile_id in selection_weights.keys():
+		tracked_weight += selection_weights[tile_id]
+		accumulated_weights[tile_id] = tracked_weight
+		
+	overall_weight = sum_array(selection_weights.values())
+	# Weight initialisation complete!
+
+
+func _select_random_tile() -> Tile.TileID:
+	var roll: float = randf_range(0.0, overall_weight)
+	for tile_id in accumulated_weights.keys():
+		if accumulated_weights[tile_id] > roll:
+			return tile_id
+	return Tile.TileID.EMPTY
+
+
 func _create_standard_board() -> void:
 	for x in range(GRID_WIDTH):
 		for y in range(GRID_HEIGHT):
@@ -154,36 +191,10 @@ func _create_standard_board() -> void:
 	
 	# Then carefully randomise the board
 	# Not too many of one type, more of the basic types. No empties initially
+	_setup_random_weights()
 	
-	const selection_weights: Dictionary = {
-		Tile.TileID.VERT: 1.0,
-		Tile.TileID.HORIZ: 1.0,
-		Tile.TileID.CROSS: 0.2,
-		Tile.TileID.LEFT_UP: 0.9,
-		Tile.TileID.RIGHT_UP: 0.9,
-		Tile.TileID.LEFT_DOWN: 0.9,
-		Tile.TileID.RIGHT_DOWN: 0.9,
-		Tile.TileID.RIGHT_SWITCHBACK: 0.4,
-		Tile.TileID.LEFT_SWITCHBACK: 0.4
-	}
-	
-	var accumulated_weights: Dictionary = {}
-	var tracked_weight = 0.0
-	for tile_id in selection_weights.keys():
-		tracked_weight += selection_weights[tile_id]
-		accumulated_weights[tile_id] = tracked_weight
-		
-	var overall_weight = sum_array(selection_weights.values())
-	# Weight initialisation complete!
-	
-	var roll: float
 	for tile_ref in tiles_reference.values():
-		roll = randf_range(0.0, overall_weight)
-		
-		for tile_id in accumulated_weights.keys():
-			if accumulated_weights[tile_id] > roll:
-				tile_ref.set_tile(tile_id)
-				break
+		tile_ref.set_tile(_select_random_tile())
 
 
 func _create_clearable_board(num_clearable_rows: int) -> void:
@@ -222,7 +233,12 @@ func _create_board(debug_option: DEBUG_BOARD = DEBUG_BOARD.NONE) -> void:
 			new_tile = TILE_SCENE.instantiate()
 			new_tile.global_position = runway_pos
 			runway.add_child(new_tile)
+			if y == 0:
+				new_tile.show_tunnel()
 			new_tile.set_tile(Tile.TileID.VERT)
+
+	# Place mountain
+	mountain.global_position = Vector2i(GRID_START_X / 3 + 5, GRID_START_Y - GRID_SIZE * 7)
 
 
 func _flatten_connection_points(input_array: Array) -> Array[int]:
@@ -378,6 +394,11 @@ func _on_speedup_cooldown_timer() -> void:
 	speedup_cooldown_active = false
 
 
+func _on_level_reached() -> void:
+	train_step_timer.time = GameControl.train_step_time
+	_restart_step_timer()
+
+
 func _on_train_converted_to_blocks(new_block_positions: Array[Vector2i], block_colour: Color) -> void:
 	for block_coord in new_block_positions:
 		# TODO If block_coord is on a runway, disable it
@@ -450,7 +471,6 @@ func _regenerate_board() -> void:
 	
 	# Rebuild all barriers
 	_create_barriers()
-	spawn_train()
 
 
 func clear_row(row: int) -> void:
@@ -469,8 +489,10 @@ func _attempt_clear() -> void:
 				clearable_row = false
 		if clearable_row:
 			rows_to_clear.append(y)
-			
-	for row in rows_to_clear:
-		clear_row(row)
-	SignalBus.emit_signal("rows_cleared", len(rows_to_clear), modifiers)
-	_regenerate_board()
+	
+	if len(rows_to_clear) > 0:
+		for row in rows_to_clear:
+			clear_row(row)
+		SignalBus.emit_signal("rows_cleared", len(rows_to_clear), modifiers)
+		_regenerate_board()
+	spawn_train()

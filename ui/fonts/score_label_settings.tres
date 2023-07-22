@@ -1,0 +1,8 @@
+[gd_resource type="LabelSettings" load_steps=2 format=3 uid="uid://bvn1wsm52flxn"]
+
+[ext_resource type="FontFile" uid="uid://dh6b8ute4whpk" path="res://ui/font_sources/Pixeled.ttf" id="1_ee542"]
+
+[resource]
+line_spacing = 0.0
+font = ExtResource("1_ee542")
+font_size = 6
