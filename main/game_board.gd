@@ -35,11 +35,12 @@ var available_runways = range(1, NUM_RUNWAYS + 1)
 @onready var blocks: Node2D = $blocks
 @onready var mountain: Sprite2D = $mountain
 @onready var powerups: Node2D = $powerups
+@onready var clear: AudioStreamPlayer = $clear
 
 const selection_tile_weights: Dictionary = {
-	Tile.TileID.VERT: 0.5,
-	Tile.TileID.HORIZ: 0.5,
-	Tile.TileID.CROSS: 0.75,
+	Tile.TileID.VERT: 0.3,
+	Tile.TileID.HORIZ: 0.3,
+	Tile.TileID.CROSS: 0.5,
 	Tile.TileID.LEFT_UP: 0.3,
 	Tile.TileID.RIGHT_UP: 0.3,
 	Tile.TileID.LEFT_DOWN: 0.3,
@@ -49,12 +50,11 @@ const selection_tile_weights: Dictionary = {
 }
 
 const selection_powerup_weights: Dictionary = {
-	Powerup.PowerupID.NONE: 0.006,
-#	Powerup.PowerupID.NUKE: 0.05,
-	Powerup.PowerupID.NUKE: 100.0,
+	Powerup.PowerupID.NONE: 0.05,
+	Powerup.PowerupID.NUKE: 0.05,
 	Powerup.PowerupID.PIKE: 0.2,
 	Powerup.PowerupID.SPREAD: 0.2,
-	Powerup.PowerupID.MULTIPLIER: 0.3
+	Powerup.PowerupID.MULTIPLIER: 0.002
 }
 
 var accumulated_tile_weights: Dictionary
@@ -83,9 +83,10 @@ var active_mouse_grid_pos: Vector2i
 var speedup_active: bool = false
 var speedup_cooldown_active: bool = false
 
+
 func _ready() -> void:
-	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.TEST_CLEAR_4
-#	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.NONE
+#	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.TEST_CLEAR_4
+	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.NONE
 	randomize()
 	_create_playable_area()
 	_setup_random_tile_weights()
@@ -98,6 +99,7 @@ func _ready() -> void:
 	current_active_tile.set_is_selected(true)
 	SignalBus.connect("tile_rotated", _on_tile_rotated)
 	SignalBus.connect("train_converted_to_blocks", _on_train_converted_to_blocks)
+	SignalBus.connect("freed_powerup", _on_freed_powerup)
 	GameScore.connect("level_reached", _on_level_reached)
 	if debug_mode == DEBUG_BOARD.TEST_CLEAR_1 or debug_mode == DEBUG_BOARD.TEST_CLEAR_4:
 		spawn_train(1)
@@ -107,6 +109,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	modifiers = []
 	global_mouse_pos = get_global_mouse_position()
 	var new_grid_position: Vector2i
 	if GameControl.game_active:
@@ -135,12 +138,16 @@ func _process(_delta: float) -> void:
 	
 		if Input.is_action_pressed("speed_up") and not speedup_cooldown_active:
 			train_step_timer.wait_time = GameControl.min_train_step_time
+			for train in trains.get_children():
+				train.current_train_step_time = GameControl.min_train_step_time
 			if not speedup_active:
 				speedup_active = true
 				_restart_step_timer()
 			
 		if Input.is_action_just_released("speed_up"):
 			train_step_timer.wait_time = GameControl.train_step_time
+			for train in trains.get_children():
+				train.current_train_step_time = GameControl.train_step_time
 			if speedup_active:
 				speedup_active = false
 				_restart_step_timer()
@@ -421,6 +428,9 @@ func _on_tile_rotated(tile_coord: Vector2i, _tile_reference: Tile, _new_tile_id:
 
 # Game progress stuff
 func spawn_train(runway_choice: int = -1) -> void:
+	if len(available_runways) == 0:
+		# Game lost, abort
+		return
 	if runway_choice == -1:  # Invalid default
 		runway_choice = available_runways[randi() % available_runways.size()]
 	var new_train: Train = TRAIN_SCENE.instantiate()
@@ -579,8 +589,22 @@ func clear_row(row: int) -> void:
 		tiles_reference.erase(Vector2i(x, row))
 
 
+func _on_freed_powerup(powerup: Powerup) -> void:
+	var key_to_delete: Vector2i = Vector2i(-1, -1)
+	for key in powerups_reference.keys():
+		if powerups_reference[key] == powerup:
+			key_to_delete = key
+	
+	if key_to_delete != Vector2i(-1, -1):
+		powerups_reference.erase(key_to_delete)
+
+
+func add_modifier(modifier: Dictionary) -> void:
+	modifiers.append(modifier)
+	print(str(modifiers) + " ADDED")
+
+
 func _attempt_clear() -> void:
-	print("ATTEMPTING CLEAR")
 	rows_to_clear = []
 	var clearable_row: bool
 	for y in range(GRID_HEIGHT):
@@ -591,12 +615,13 @@ func _attempt_clear() -> void:
 		if clearable_row:
 			rows_to_clear.append(y)
 	
-	print("CLEARABLE ROWS " + str(rows_to_clear))
-	
 	if len(rows_to_clear) > 0:
+		clear.play()
 		for row in rows_to_clear:
 			clear_row(row)
-		SignalBus.emit_signal("rows_cleared", len(rows_to_clear), modifiers)
+		var modifiers_copy = modifiers.duplicate()
+		SignalBus.emit_signal("rows_cleared", len(rows_to_clear), modifiers_copy)
+		modifiers = []
 		_regenerate_board()
 	if not GameControl.game_lost:
 		spawn_powerup()

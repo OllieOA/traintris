@@ -28,19 +28,17 @@
 - [x] Add main menu
 - [ ] Add settings
 	- [ ] Font setting
-	- [ ] Keyboard layout setting
+	- [x] Keyboard layout setting
 	- [ ] Sound setting
-- [ ] Add exclamation points when 1 away from barrier
-- [ ] Add powerups to turn trains full vert/full horizontal
+- [x] Add powerups to turn trains full vert/full horizontal
 - [x] Add powerup for nuclear option (clear board no points)
 ## Game
 - [x] Increase speed based on level
 - [x] Increase min/max train length with levels
-- [ ] Add sound prompt for trains (chuggachugga)
+- [x] Add sound prompt for trains (chuggachugga)
 - [ ] Add butler upload pipeline for project
 - [x] Add powerups for score multiplication/addition
-- [ ] Refactor all spawning to "falling"
-- [ ] Add loss handling
+- [x] Add loss handling
 ## Juice
 - [x] Add barrier setup to tunnel/crashed out tunnel
 - [ ] Add train "squash" animation
@@ -53,9 +51,12 @@
 - [x] Trains coming off the last row of the runway do not crash
 - [x] Train can roll over blocks (should be fixed by runway handling)
 - [x] Train cannot collide with top of board
-- [ ] Barriers appear at the top on spawn incorrectly
+
 
 ## Rejected
 - [ ] Add season modifiers (change colour, add particles)
 - [ ] Add start level selector
 - [ ] Add status for level length
+- [ ] Refactor all spawning to "falling"
+- [ ] Add exclamation points when 1 away from barrier
+- [ ] Barriers appear at the top on spawn incorrectly

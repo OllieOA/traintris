@@ -21,6 +21,9 @@ const TRAIN_DIRECTION_TO_VECTOR: Dictionary = {
 
 const RUNWAY_THRESHOLD: int = -4
 
+@onready var whistle: AudioStreamPlayer = $whistle
+@onready var chugga: AudioStreamPlayer = $chugga
+
 var train_colour
 var caboose_grid_coord: Vector2i
 
@@ -28,10 +31,18 @@ var num_carriages: int
 var segments_refs: Array[TrainSegment]
 
 var game_board_reference: GameBoard
+var base_chugga_len: float 
+var current_train_step_time: float  
 
 
 func _ready() -> void:
+	current_train_step_time = GameControl.train_step_time
 	num_carriages = randi_range(GameControl.min_train_length, GameControl.max_train_length)
+	whistle.play()
+	chugga.play()
+	base_chugga_len = chugga.stream.get_length()
+	GameScore.connect("level_reached", on_level_reached)
+	set_audio_speed()
 
 
 func generate_train(base_coord: Vector2i) -> void:
@@ -148,6 +159,7 @@ func remove_from_map():
 
 
 func move_to_next() -> void:
+	set_audio_speed()
 	# Check if next space is jammed
 	# If so, convert to blocks
 	# Otherwise, move caboose to next location, and iterate everything behind it
@@ -155,6 +167,7 @@ func move_to_next() -> void:
 	if caboose_grid_coord.y < RUNWAY_THRESHOLD:  # There will be an invisible barrier at -3
 		update_caboose_grid_coord_logically(Tile.Dir.DOWN)
 		update_all_segments_physically()
+		chugga.play()
 		return
 	
 	var current_grid_coord = segments_refs[0].get_current_grid_location()
@@ -175,9 +188,10 @@ func move_to_next() -> void:
 	# Also check if there is another train segment at that location (noting that we only want to check current, not previous)
 	for s_idx in range(1, len(segments_refs)):
 		if segments_refs[s_idx].get_current_grid_location() == segments_refs[0].get_current_grid_location():
-			convert_train_to_blocks()
-			queue_free()
-			return
+			if not [Tile.TileID.RIGHT_SWITCHBACK, Tile.TileID.LEFT_SWITCHBACK].has(game_board_reference.tiles_reference[segments_refs[0].get_current_grid_location()].tile_id):
+				convert_train_to_blocks()
+				queue_free()
+				return
 	update_all_segments_physically()
 	
 	if segments_refs[0].get_current_grid_location() in game_board_reference.powerups_reference.keys():
@@ -188,3 +202,12 @@ func move_to_next() -> void:
 		game_board_reference.tiles_reference[segments_refs[0].get_current_grid_location()].set_is_rotatable(false)
 	if segments_refs[-1].get_previous_grid_location().y >= 0:
 		game_board_reference.tiles_reference[segments_refs[-1].get_previous_grid_location()].set_is_rotatable(true)
+	chugga.play()
+
+
+func set_audio_speed() -> void:
+	chugga.pitch_scale = base_chugga_len / current_train_step_time
+
+
+func on_level_reached(_next_level: int) -> void:
+	set_audio_speed()

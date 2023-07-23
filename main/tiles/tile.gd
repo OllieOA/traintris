@@ -82,6 +82,7 @@ var tile_rect: Rect2
 @onready var block_sprite: Sprite2D = $block_sprite
 @onready var tunnel_sprite: Sprite2D = $tunnel_sprite
 
+
 func _ready():
 	tile_id = tile_sprite.frame
 	tile_rect = Rect2(global_position, tile_sprite.get_rect().size)

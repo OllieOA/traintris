@@ -5,12 +5,15 @@ signal level_reached(next_level: int)
 var current_score: int = 0
 var current_level: int = 0
 var score_for_next_level: int = 0
+
+var score_tracker: Resource
 @export var best_score: int = 0
 @export var highest_level: int = 0
 
-const EXPONENT_FACTOR: float = 0.1
+const EXPONENT_FACTOR: float = 0.05
 const BASE_SCORE: int = 20
 const BASE_PONTS_PER_LEVEL: int = 100
+const SCORE_TRACKER_PATH = "user://score_tracker.tres"
 
 const RATIO_POINTS_FOR_LEVEL: Dictionary = {
 	0: 1,
@@ -30,31 +33,37 @@ const TRAIN_LEN_FOR_LEVEL: Dictionary = {
 	1: [3, 4],
 	2: [4, 6],
 	3: [4, 6],
-	4: [6, 8],
-	5: [6, 8],
-	6: [8, 10],
-	7: [10, 12],
-	8: [12, 14],
-	9: [14, 20],
+	4: [4, 8],
+	5: [4, 8],
+	6: [6, 8],
+	7: [6, 8],
+	8: [6, 10],
+	9: [6, 10],
 }
 
 const TRAIN_TIMER_FOR_LEVEL: Dictionary = {
-	0: 1.6,
-	1: 1.5,
-	2: 1.4,
-	3: 1.3,
-	4: 1.2,
-	5: 1.1,
-	6: 1.0,
-	7: 0.8,
-	8: 0.6,
-	9: 0.4,
+	0: 2.0,
+	1: 1.9,
+	2: 1.8,
+	3: 1.7,
+	4: 1.6,
+	5: 1.5,
+	6: 1.4,
+	7: 1.2,
+	8: 1.0,
+	9: 0.8,
 }
 
 func _ready() -> void:
 	SignalBus.connect("rows_cleared", add_to_score_clear_rows)
+	SignalBus.connect("game_lost", _update_best_scores)
 	# TODO: Load score
 	_setup_score()
+	
+	if FileAccess.file_exists(SCORE_TRACKER_PATH):
+		score_tracker = ResourceLoader.load(SCORE_TRACKER_PATH)
+	else:
+		score_tracker = ScoreTracker.new()
 
 
 func _setup_score() -> void:
@@ -71,7 +80,7 @@ func add_to_score(val: int) -> void:
 
 
 func save_score() -> void:
-	pass
+	ResourceSaver.save(score_tracker, SCORE_TRACKER_PATH)
 
 
 func _check_next_level() -> void:
@@ -94,7 +103,6 @@ func _check_next_level() -> void:
 func add_to_score_clear_rows(simultaneously_cleared_rows: int, modifiers: Array) -> void:
 	var score_expression = Expression.new()
 	var score_expression_string: String = str(BASE_SCORE)
-	
 	for modifier in modifiers:
 		var modifier_operation: String = modifier["modifier_operation"]
 		var modifier_value: float = modifier["modifier_value"]
@@ -108,8 +116,18 @@ func add_to_score_clear_rows(simultaneously_cleared_rows: int, modifiers: Array)
 
 
 func get_highest_score() -> int:
-	return 1
+	return best_score
 
 
 func get_highest_level() -> int:
-	return 1
+	return highest_level
+
+
+func _update_best_scores() -> void:
+	if current_level > highest_level:
+		highest_level = current_level
+		score_tracker.set_best_level(highest_level)
+	if current_score > best_score:
+		best_score = current_score
+		score_tracker.set_best_score(best_score)
+	save_score()

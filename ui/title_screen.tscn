@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://ee2gg3dyunyp"]
+[gd_scene load_steps=6 format=3 uid="uid://ee2gg3dyunyp"]
 
 [ext_resource type="Texture2D" uid="uid://bxpwm2b3fwr26" path="res://main/title_screen.png" id="1_21bw1"]
 [ext_resource type="Theme" uid="uid://cj0an4c8e6iiu" path="res://ui/themes/main_menu_theme.tres" id="1_o0dc5"]
 [ext_resource type="Script" path="res://ui/title_screen.gd" id="1_qpo1w"]
 [ext_resource type="Script" path="res://ui/how_to_play_panel.gd" id="4_3r86g"]
+[ext_resource type="Script" path="res://ui/settings_panel.gd" id="4_gix3p"]
 
 [node name="title_screen" type="Control"]
 layout_mode = 3
@@ -61,6 +62,7 @@ text = "HIGHEST SCORE: 0"
 horizontal_alignment = 1
 
 [node name="settings_panel" type="PanelContainer" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -73,6 +75,32 @@ offset_right = 20.0
 offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_o0dc5")
+script = ExtResource("4_gix3p")
+
+[node name="keyboard_containers" type="VBoxContainer" parent="settings_panel"]
+layout_mode = 2
+
+[node name="qwerty" type="Button" parent="settings_panel/keyboard_containers"]
+layout_mode = 2
+text = "QWERTY"
+
+[node name="azerty" type="Button" parent="settings_panel/keyboard_containers"]
+layout_mode = 2
+text = "AZERTY"
+
+[node name="dvorak" type="Button" parent="settings_panel/keyboard_containers"]
+layout_mode = 2
+text = "DVORAK"
+
+[node name="caveat" type="Label" parent="settings_panel/keyboard_containers"]
+layout_mode = 2
+text = "PLEASE NOTE - THESE
+ARE UNTESTED OPTIONS
+AS I DO NOT HAVE THESE
+KEYBOARD. HOPE THEY 
+WORK!"
+horizontal_alignment = 1
 
 [node name="how_to_play_panel" type="PanelContainer" parent="."]
 visible = false

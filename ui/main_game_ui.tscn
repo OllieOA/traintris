@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://cpk4k0bwsw8kl"]
+[gd_scene load_steps=6 format=3 uid="uid://cpk4k0bwsw8kl"]
 
 [ext_resource type="LabelSettings" uid="uid://dpe68dbrt0jf3" path="res://ui/fonts/level_label_settings.tres" id="1_74ow2"]
 [ext_resource type="Script" path="res://ui/main_game_ui.gd" id="1_h84fn"]
 [ext_resource type="Theme" uid="uid://bwpba1tj35x2m" path="res://ui/themes/level_container.tres" id="1_hf4ql"]
 [ext_resource type="LabelSettings" uid="uid://bvn1wsm52flxn" path="res://ui/fonts/score_label_settings.tres" id="4_frq70"]
+[ext_resource type="Theme" uid="uid://cj0an4c8e6iiu" path="res://ui/themes/main_menu_theme.tres" id="5_o2u0d"]
 
 [node name="main_game_ui" type="CanvasLayer"]
 script = ExtResource("1_h84fn")
@@ -68,13 +69,38 @@ layout_mode = 2
 text = "3000"
 label_settings = ExtResource("4_frq70")
 
-[node name="NuclearButtonPanel" type="PanelContainer" parent="."]
+[node name="GameOver" type="PanelContainer" parent="."]
 visible = false
-offset_right = 40.0
-offset_bottom = 40.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -23.0
+offset_top = -20.0
+offset_right = 23.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("5_o2u0d")
 
-[node name="NuclearButtonContainer" type="MarginContainer" parent="NuclearButtonPanel"]
+[node name="GameOverContainer" type="MarginContainer" parent="GameOver"]
 layout_mode = 2
 
-[node name="NuclearButtonOrganiser" type="HBoxContainer" parent="NuclearButtonPanel/NuclearButtonContainer"]
+[node name="GameOverOrganiser" type="VBoxContainer" parent="GameOver/GameOverContainer"]
 layout_mode = 2
+
+[node name="Praise" type="Label" parent="GameOver/GameOverContainer/GameOverOrganiser"]
+layout_mode = 2
+text = "GREAT WORK!
+YOU SURVIVED 0 LEVELS
+WITH 0000 POINTS!
+
+THANK YOU FOR PLAYING
+EVERYTHING BY OLLIEBOYOA"
+horizontal_alignment = 1
+
+[node name="BackToMenu" type="Button" parent="GameOver/GameOverContainer/GameOverOrganiser"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "MENU"

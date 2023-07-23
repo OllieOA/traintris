@@ -1,7 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://cy1qctw7t3433"]
+[gd_scene load_steps=8 format=3 uid="uid://cy1qctw7t3433"]
 
 [ext_resource type="Texture2D" uid="uid://bile4cnhkaaaa" path="res://main/tiles/powerups.png" id="1_mc60x"]
 [ext_resource type="Script" path="res://main/tiles/powerup.gd" id="2_7oiyx"]
+[ext_resource type="AudioStream" uid="uid://ds4d1hehe2do4" path="res://sounds/Blast_6.wav" id="3_31pux"]
+[ext_resource type="AudioStream" uid="uid://dpx5cde3jfd6t" path="res://sounds/Powerup_4.wav" id="4_huwce"]
+[ext_resource type="AudioStream" uid="uid://cqqu5aolsgytg" path="res://sounds/spread.wav" id="5_ryqux"]
 
 [sub_resource type="Animation" id="Animation_gglk6"]
 resource_name = "bob"
@@ -53,3 +56,14 @@ hframes = 4
 libraries = {
 "": SubResource("AnimationLibrary_uv41a")
 }
+
+[node name="nuke" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_31pux")
+
+[node name="pike" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_huwce")
+volume_db = -8.0
+
+[node name="spread" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_ryqux")
+volume_db = -8.0
