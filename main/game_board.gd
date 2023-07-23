@@ -73,7 +73,7 @@ func _ready() -> void:
 	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.NONE
 	randomize()
 	_create_playable_area()
-	_create_board()
+	_create_board(debug_mode)
 	_create_barriers()
 	# Set cursor
 	tile_cursor.initialise_cursor()
@@ -253,10 +253,12 @@ func _flatten_connection_points(input_array: Array) -> Array[int]:
 	return output_array
 
 
-func _add_single_barrier_to_tile(tile_id: Vector2i, barrier_id: int) -> void:
+func _add_single_barrier_to_tile(tile_id: Vector2i, barrier_id: int, invisible: bool = false) -> void:
 	var new_barrier = BARRIER_SCENE.instantiate()
 	new_barrier.global_position = Vector2(GRID_START_X + tile_id.x * GRID_SIZE, GRID_START_Y + tile_id.y * GRID_SIZE)
 	barriers.add_child(new_barrier)
+	if invisible:
+		new_barrier.hide_barrier()
 	new_barrier.set_barrier_id(barrier_id)
 	
 	if tile_id not in barriers_reference:
@@ -359,6 +361,9 @@ func _create_barriers() -> void:
 		barriers_reference[tile_pos] = []
 	for tile_pos in tiles_reference.keys():
 		_update_barriers_for_tile(tile_pos)
+	# Special case for invisible barrier in runway
+	for x in range(GRID_WIDTH):
+		_add_single_barrier_to_tile(Vector2i(x, -4), Barrier.BarrierID.DOWN, true)
 
 
 func _create_train_timer() -> void: 
@@ -405,13 +410,11 @@ func _on_level_reached() -> void:
 
 
 func _disable_runway(runway_to_disable: int, x_coord: int) -> void:
-	print("STATE OF AVAILABLE RUNWAYS BEFORE CLEARING " + str(available_runways))
 	if runway_to_disable not in available_runways:  # Already cleared
 		return
 	available_runways.erase(runway_to_disable)
 	var runway_ref: Tile
 	for y in range(0, -RUNWAY_LENGTH -1, -1):
-		print("CHECKING FOR TUNNEL ON " + str(Vector2i(x_coord, y)))
 		runway_ref = tiles_reference.get(Vector2i(x_coord, y))
 		if runway_ref != null:
 			if runway_ref.has_tunnel:
@@ -423,12 +426,10 @@ func _disable_runway(runway_to_disable: int, x_coord: int) -> void:
 
 func _on_train_converted_to_blocks(new_block_positions: Array[Vector2i], block_colour: Color) -> void:
 	for block_coord in new_block_positions:
-		print("Converting " + str(block_coord))
 		var runway_of_block = ceil(float(block_coord.x) / 2.0)
 		var tile_to_convert = tiles_reference.get(block_coord)
 		if block_coord.y < 0:
 			# Runway disabled
-			print("DISABLING RUNWAY " + str(runway_of_block))
 			_disable_runway(runway_of_block, block_coord.x)
 			continue
 		tile_to_convert.convert_to_block(block_colour)
@@ -524,4 +525,5 @@ func _attempt_clear() -> void:
 			clear_row(row)
 		SignalBus.emit_signal("rows_cleared", len(rows_to_clear), modifiers)
 		_regenerate_board()
-	spawn_train()
+	if not GameControl.game_lost:
+		spawn_train()

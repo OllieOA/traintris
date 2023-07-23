@@ -4,7 +4,7 @@
 - [x] Create train movement
 - [x] Train creates blocks on stop
 - [x] Add train speedup control
-- [ ] Add check of other segment present on board
+- [x] Add check of other segment present on board
 ## Board
 - [x] Select tile sprites
 - [x] Generate board at runtime
@@ -16,6 +16,9 @@
 - [x] Clear board on full line match
 - [x] Remove runways when trains stop on one
 - [x] Add "switchback" tiles
+- [x] Make corner tiles more rounded to match switchbacks for visual consistency
+- [x] Prevent segments occupying space from being selected
+- [x] Trains should not be able to go up a runway
 ## UI
 - [x] Add levels (seasons) widget
 - [x] Add score widget
@@ -34,7 +37,7 @@
 - [ ] Add powerup for nuclear option (clear board no points)
 ## Game
 - [x] Increase speed based on level
-- [ ] Increase min/max train length with levels
+- [x] Increase min/max train length with levels
 - [ ] Add sound prompt for trains (chuggachugga)
 - [ ] Add butler upload pipeline for project
 - [ ] Add powerups for score multiplication/addition
@@ -48,5 +51,7 @@
 - [ ] Add clearing animation (horizontal swipe or particles)
 ## Bug
 - [x] Fix coal truck wheels
-- [ ] Train can roll over blocks (should be fixed by runway handling)
+- [x] Trains coming off the last row of the runway do not crash
+- [x] Train can roll over blocks (should be fixed by runway handling)
 - [x] Train cannot collide with top of board
+- [ ] Barriers appear at the top on spawn incorrectly

@@ -77,6 +77,8 @@ func _check_next_level() -> void:
 	if current_score >= score_for_next_level:
 		current_level = clamp(current_level + 1, RATIO_POINTS_FOR_LEVEL.keys().min(), RATIO_POINTS_FOR_LEVEL.keys().max())
 		GameControl.train_step_time = TRAIN_TIMER_FOR_LEVEL[current_level]
+		GameControl.min_train_length = TRAIN_LEN_FOR_LEVEL[current_level][0]
+		GameControl.max_train_length = TRAIN_LEN_FOR_LEVEL[current_level][1]
 		if current_level == RATIO_POINTS_FOR_LEVEL.keys().max():
 			score_for_next_level = INF
 			return
@@ -102,4 +104,3 @@ func add_to_score_clear_rows(simultaneously_cleared_rows: int, modifiers: Array)
 	
 	var total_score = pow(base_score, 1.0 + ((simultaneously_cleared_rows - 1) * EXPONENT_FACTOR))
 	add_to_score(int(total_score))
-	print("NEW SCORE " + str(int(total_score)))

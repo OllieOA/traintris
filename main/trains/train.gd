@@ -15,6 +15,8 @@ const TRAIN_DIRECTION_TO_VECTOR: Dictionary = {
 	Tile.Dir.UP: Vector2i.UP,
 }
 
+const RUNWAY_THRESHOLD: int = -4
+
 var train_colour
 var caboose_grid_coord: Vector2i
 
@@ -67,7 +69,7 @@ func generate_train(base_coord: Vector2i) -> void:
 
 
 func _update_segment_ref_sprites(segment_ref: TrainSegment) -> void:
-	if segment_ref.get_current_grid_location().y < 0:
+	if segment_ref.get_current_grid_location().y < RUNWAY_THRESHOLD:
 		segment_ref.update_segment_sprite(Tile.Dir.UP, Tile.Dir.DOWN)
 		return
 	
@@ -136,7 +138,7 @@ func move_to_next() -> void:
 	# If so, convert to blocks
 	# Otherwise, move caboose to next location, and iterate everything behind it
 	# using update_caboose_grid_coord
-	if caboose_grid_coord.y < 0:
+	if caboose_grid_coord.y < RUNWAY_THRESHOLD:  # There will be an invisible barrier at -3
 		update_caboose_grid_coord_logically(Tile.Dir.DOWN)
 		update_all_segments_physically()
 		return
@@ -155,4 +157,17 @@ func move_to_next() -> void:
 		convert_train_to_blocks()
 		queue_free()
 		return
+		
+	# Also check if there is another train segment at that location (noting that we only want to check current, not previous)
+	for s_idx in range(1, len(segments_refs)):
+		if segments_refs[s_idx].get_current_grid_location() == segments_refs[0].get_current_grid_location():
+			convert_train_to_blocks()
+			queue_free()
+			return
 	update_all_segments_physically()
+	
+	# Make train-occupied tiles not selectable (if below the runway)
+	if segments_refs[0].get_current_grid_location().y >= 0:
+		game_board_reference.tiles_reference[segments_refs[0].get_current_grid_location()].set_is_rotatable(false)
+	if segments_refs[-1].get_previous_grid_location().y >= 0:
+		game_board_reference.tiles_reference[segments_refs[-1].get_previous_grid_location()].set_is_rotatable(true)

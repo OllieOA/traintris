@@ -7,3 +7,4 @@ var game_speed_modifier: float = 1.0
 
 var min_train_length: int = 0
 var max_train_length: int = 0
+var game_lost: bool = false
