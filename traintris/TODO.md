@@ -24,14 +24,12 @@
 - [x] Add score widget
 - [ ] Add high score saving
 - [x] Add points remaining for next level
-- [ ] Add status for level length
-- [ ] Add tutorial
-- [ ] Add main menu
+- [x] Add tutorial
+- [x] Add main menu
 - [ ] Add settings
 	- [ ] Font setting
 	- [ ] Keyboard layout setting
 	- [ ] Sound setting
-
 - [ ] Add exclamation points when 1 away from barrier
 - [ ] Add powerups to turn trains full vert/full horizontal
 - [x] Add powerup for nuclear option (clear board no points)
@@ -40,7 +38,7 @@
 - [x] Increase min/max train length with levels
 - [ ] Add sound prompt for trains (chuggachugga)
 - [ ] Add butler upload pipeline for project
-- [ ] Add powerups for score multiplication/addition
+- [x] Add powerups for score multiplication/addition
 - [ ] Refactor all spawning to "falling"
 - [ ] Add loss handling
 ## Juice
@@ -60,3 +58,4 @@
 ## Rejected
 - [ ] Add season modifiers (change colour, add particles)
 - [ ] Add start level selector
+- [ ] Add status for level length
