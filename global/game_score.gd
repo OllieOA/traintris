@@ -6,6 +6,7 @@ var current_score: int = 0
 var current_level: int = 0
 var score_for_next_level: int = 0
 @export var best_score: int = 0
+@export var highest_level: int = 0
 
 const EXPONENT_FACTOR: float = 0.1
 const BASE_SCORE: int = 20
@@ -104,3 +105,11 @@ func add_to_score_clear_rows(simultaneously_cleared_rows: int, modifiers: Array)
 	
 	var total_score = pow(base_score, 1.0 + ((simultaneously_cleared_rows - 1) * EXPONENT_FACTOR))
 	add_to_score(int(total_score))
+
+
+func get_highest_score() -> int:
+	return 1
+
+
+func get_highest_level() -> int:
+	return 1

@@ -4,7 +4,11 @@ const COLOUR_CHOICES: Array[Color] = [
 	Color.RED,
 	Color.SKY_BLUE,
 	Color.MEDIUM_AQUAMARINE,
-	Color.YELLOW
+	Color.YELLOW,
+	Color.CORAL,
+	Color.MEDIUM_ORCHID,
+	Color.WEB_GRAY,
+	Color.DARK_SLATE_BLUE
 ]
 
 const TRAIN_SEGMENT_SCENE: PackedScene = preload("res://main/trains/train_segment.tscn")
@@ -108,7 +112,7 @@ func update_all_segments_physically() -> void:
 
 
 func convert_train_to_blocks() -> void:
-	var new_block_positions: Array[Vector2i]
+	var new_block_positions: Array[Vector2i] = []
 	var train_length = len(segments_refs)
 	for ref in segments_refs:
 		new_block_positions.append(ref.get_previous_grid_location())
@@ -131,6 +135,16 @@ func _get_direction_pair(
 			return [known_tile, operative_array[0]]
 	
 	return [Tile.Dir.NULL, Tile.Dir.NULL]
+
+
+func remove_from_map():
+	for segment in segments_refs:
+		var relevant_tile = game_board_reference.tiles_reference.get(segment.get_current_grid_location())
+		if relevant_tile == null:
+			continue
+		relevant_tile.set_is_rotatable(true)
+		segment.queue_free()
+	queue_free()
 
 
 func move_to_next() -> void:
@@ -165,6 +179,9 @@ func move_to_next() -> void:
 			queue_free()
 			return
 	update_all_segments_physically()
+	
+	if segments_refs[0].get_current_grid_location() in game_board_reference.powerups_reference.keys():
+		game_board_reference.powerups_reference[segments_refs[0].get_current_grid_location()].apply_powerup(self)
 	
 	# Make train-occupied tiles not selectable (if below the runway)
 	if segments_refs[0].get_current_grid_location().y >= 0:

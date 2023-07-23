@@ -67,3 +67,14 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "3000"
 label_settings = ExtResource("4_frq70")
+
+[node name="NuclearButtonPanel" type="PanelContainer" parent="."]
+visible = false
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="NuclearButtonContainer" type="MarginContainer" parent="NuclearButtonPanel"]
+layout_mode = 2
+
+[node name="NuclearButtonOrganiser" type="HBoxContainer" parent="NuclearButtonPanel/NuclearButtonContainer"]
+layout_mode = 2

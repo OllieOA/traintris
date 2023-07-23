@@ -1,0 +1,118 @@
+[gd_scene load_steps=5 format=3 uid="uid://ee2gg3dyunyp"]
+
+[ext_resource type="Texture2D" uid="uid://bxpwm2b3fwr26" path="res://main/title_screen.png" id="1_21bw1"]
+[ext_resource type="Theme" uid="uid://cj0an4c8e6iiu" path="res://ui/themes/main_menu_theme.tres" id="1_o0dc5"]
+[ext_resource type="Script" path="res://ui/title_screen.gd" id="1_qpo1w"]
+[ext_resource type="Script" path="res://ui/how_to_play_panel.gd" id="4_3r86g"]
+
+[node name="title_screen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_o0dc5")
+script = ExtResource("1_qpo1w")
+
+[node name="title_backing" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("1_21bw1")
+
+[node name="start_game_container" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -44.0
+offset_top = -135.0
+offset_right = 44.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/margin_bottom = 10
+
+[node name="start_game_organiser" type="VBoxContainer" parent="start_game_container"]
+layout_mode = 2
+
+[node name="start_game_button" type="Button" parent="start_game_container/start_game_organiser"]
+layout_mode = 2
+text = "START GAME"
+
+[node name="settings_button" type="Button" parent="start_game_container/start_game_organiser"]
+layout_mode = 2
+text = "SETTINGS"
+
+[node name="how_to_play_button" type="Button" parent="start_game_container/start_game_organiser"]
+layout_mode = 2
+text = "HOW TO PLAY"
+
+[node name="best_level" type="Label" parent="start_game_container/start_game_organiser"]
+layout_mode = 2
+text = "HIGHEST LEVEL: 0"
+horizontal_alignment = 1
+
+[node name="best_score" type="Label" parent="start_game_container/start_game_organiser"]
+layout_mode = 2
+text = "HIGHEST SCORE: 0"
+horizontal_alignment = 1
+
+[node name="settings_panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="how_to_play_panel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4_3r86g")
+
+[node name="how_to_play_organiser" type="VBoxContainer" parent="how_to_play_panel"]
+layout_mode = 2
+
+[node name="instructions" type="Label" parent="how_to_play_panel/how_to_play_organiser"]
+layout_mode = 2
+text = "TRAINS WILL COME IN FROM THE MOUNTAIN, AND
+YOUR JOB IS TO GUIDE THEM THROUGH A GRID OF TRACKS
+
+COMPLETED TRAINS TURN INTO BLOCKS, AND YOU 
+GET POINTS FOR THIS. YOU CAN GET FAR MORE POINTS BY 
+COMPLETELY FILLING ROWS WITH BLOCKS, AND EVEN
+MORE FOR CLEARING MANY ROWS AT ONCE!
+POWERUPS ARE HERE TO HELP YOU, SUCH AS THROUGH
+MULTIPLIERS TO YOUR SCORE, OR CLEARING THE BOARD
+
+-- MOUSE CONTROLS --
+HOVER TO SELECT GRID, LEFT/RIGHT CLICK TO ROTATE 
+
+-- KEYBOARD CONTROLS -- 
+MOVE AROUND WITH WASD (OR YOUR LAYOUT'S
+EQUIVALENT - SET IT SETTINGS), E/Q TO ROTATE
+
+-- GLOBAL CONTROLS --
+SPACE WILL ACCELERATE YOUR TRAIN TO THE END OF
+YOUR TRACK IF YOU ARE HAPPY WITH IT!"
+horizontal_alignment = 1

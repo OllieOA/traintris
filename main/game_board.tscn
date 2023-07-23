@@ -1,13 +1,108 @@
-[gd_scene load_steps=6 format=3 uid="uid://hw3dfrxibldv"]
+[gd_scene load_steps=8 format=3 uid="uid://hw3dfrxibldv"]
 
 [ext_resource type="Texture2D" uid="uid://bdn6bst0p0ftb" path="res://main/game_board_border.png" id="1_cmghq"]
 [ext_resource type="Script" path="res://main/game_board.gd" id="1_glgbf"]
+[ext_resource type="Texture2D" uid="uid://ba5p6u0176c43" path="res://main/tiles/background_probs.png" id="2_xghl6"]
+[ext_resource type="Texture2D" uid="uid://ctghcdw2ch242" path="res://main/tiles/tree_props.png" id="3_jgvxg"]
 [ext_resource type="Texture2D" uid="uid://2ioep18xtbsp" path="res://main/tile_cursor.png" id="3_yj2y6"]
 [ext_resource type="Script" path="res://main/tile_cursor.gd" id="4_neesq"]
 [ext_resource type="Texture2D" uid="uid://w0clrep3y27r" path="res://main/tiles/mountains.png" id="5_bi6s7"]
 
 [node name="game_board" type="Node2D"]
 script = ExtResource("1_glgbf")
+
+[node name="props" type="Node2D" parent="."]
+
+[node name="background" type="Sprite2D" parent="props"]
+texture = ExtResource("2_xghl6")
+centered = false
+
+[node name="trees" type="Node2D" parent="props"]
+y_sort_enabled = true
+
+[node name="tree" type="Sprite2D" parent="props/trees"]
+position = Vector2(15, 89)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+
+[node name="tree2" type="Sprite2D" parent="props/trees"]
+position = Vector2(28, 119)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+frame = 1
+
+[node name="tree3" type="Sprite2D" parent="props/trees"]
+position = Vector2(12, 160)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+
+[node name="tree4" type="Sprite2D" parent="props/trees"]
+position = Vector2(37, 201)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+frame = 1
+
+[node name="tree5" type="Sprite2D" parent="props/trees"]
+position = Vector2(14, 244)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+
+[node name="tree6" type="Sprite2D" parent="props/trees"]
+position = Vector2(59, 213)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+
+[node name="tree12" type="Sprite2D" parent="props/trees"]
+position = Vector2(61, 101)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+
+[node name="tree13" type="Sprite2D" parent="props/trees"]
+position = Vector2(42, 83)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+frame = 2
+
+[node name="tree7" type="Sprite2D" parent="props/trees"]
+position = Vector2(45, 163)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+frame = 2
+
+[node name="tree8" type="Sprite2D" parent="props/trees"]
+position = Vector2(4, 132)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+
+[node name="tree9" type="Sprite2D" parent="props/trees"]
+position = Vector2(45, 240)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+frame = 1
+
+[node name="tree10" type="Sprite2D" parent="props/trees"]
+position = Vector2(9, 219)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+
+[node name="tree11" type="Sprite2D" parent="props/trees"]
+position = Vector2(54, 287)
+texture = ExtResource("3_jgvxg")
+centered = false
+hframes = 4
+frame = 2
 
 [node name="tiles" type="Node2D" parent="."]
 
@@ -38,3 +133,5 @@ texture = ExtResource("5_bi6s7")
 centered = false
 
 [node name="blocks" type="Node2D" parent="."]
+
+[node name="powerups" type="Node2D" parent="."]

@@ -1,0 +1,46 @@
+[gd_resource type="Theme" load_steps=10 format=3 uid="uid://cj0an4c8e6iiu"]
+
+[ext_resource type="StyleBox" uid="uid://d1jdwqa8ej3sr" path="res://ui/themes/main_menu_normal_theme.tres" id="1_bau8g"]
+[ext_resource type="StyleBox" uid="uid://brbgx6jax01ux" path="res://ui/themes/main_menu_hover_button_theme.tres" id="1_bbd1x"]
+[ext_resource type="FontFile" uid="uid://dh6b8ute4whpk" path="res://ui/font_sources/Pixeled.ttf" id="1_tfw76"]
+[ext_resource type="Texture2D" uid="uid://bxy5mrvsg8oks" path="res://main/trains/train_block.png" id="4_qh4v2"]
+[ext_resource type="Texture2D" uid="uid://b63tyhmlavs7j" path="res://main/score_border.png" id="5_trepx"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_kw6j1"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_qoy6y"]
+texture = ExtResource("4_qh4v2")
+texture_margin_left = 2.0
+texture_margin_top = 2.0
+texture_margin_right = 2.0
+texture_margin_bottom = 2.0
+modulate_color = Color(0.0509804, 0.109804, 0.129412, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_pgklp"]
+texture = ExtResource("5_trepx")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+modulate_color = Color(0.227451, 0.227451, 0.227451, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_43uxt"]
+texture = ExtResource("5_trepx")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+modulate_color = Color(0.227451, 0.227451, 0.227451, 1)
+
+[resource]
+Button/font_sizes/font_size = 8
+Button/fonts/font = ExtResource("1_tfw76")
+Button/styles/focus = SubResource("StyleBoxEmpty_kw6j1")
+Button/styles/hover = ExtResource("1_bbd1x")
+Button/styles/normal = ExtResource("1_bau8g")
+Button/styles/pressed = SubResource("StyleBoxTexture_qoy6y")
+Label/constants/line_spacing = 0
+Label/font_sizes/font_size = 5
+Label/fonts/font = ExtResource("1_tfw76")
+Panel/styles/panel = SubResource("StyleBoxTexture_pgklp")
+PanelContainer/styles/panel = SubResource("StyleBoxTexture_43uxt")

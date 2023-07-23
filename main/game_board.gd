@@ -3,6 +3,7 @@ class_name GameBoard extends Node2D
 const TILE_SCENE: PackedScene = preload("res://main/tiles/tile.tscn")
 const BARRIER_SCENE: PackedScene = preload("res://main/tiles/barrier.tscn")
 const TRAIN_SCENE: PackedScene = preload("res://main/trains/train.tscn")
+const POWERUP_SCENE: PackedScene = preload("res://main/tiles/powerup.tscn")
 
 const BASE_RES_X = 480
 const BASE_RES_Y = 640
@@ -33,9 +34,10 @@ var available_runways = range(1, NUM_RUNWAYS + 1)
 @onready var tile_cursor: Sprite2D = $tile_cursor
 @onready var blocks: Node2D = $blocks
 @onready var mountain: Sprite2D = $mountain
+@onready var powerups: Node2D = $powerups
 
-const selection_weights: Dictionary = {
-	Tile.TileID.VERT: 0.5  ,
+const selection_tile_weights: Dictionary = {
+	Tile.TileID.VERT: 0.5,
 	Tile.TileID.HORIZ: 0.5,
 	Tile.TileID.CROSS: 0.75,
 	Tile.TileID.LEFT_UP: 0.3,
@@ -46,8 +48,20 @@ const selection_weights: Dictionary = {
 	Tile.TileID.LEFT_SWITCHBACK: 0.75
 }
 
-var accumulated_weights: Dictionary
-var overall_weight: float
+const selection_powerup_weights: Dictionary = {
+	Powerup.PowerupID.NONE: 0.006,
+#	Powerup.PowerupID.NUKE: 0.05,
+	Powerup.PowerupID.NUKE: 100.0,
+	Powerup.PowerupID.PIKE: 0.2,
+	Powerup.PowerupID.SPREAD: 0.2,
+	Powerup.PowerupID.MULTIPLIER: 0.3
+}
+
+var accumulated_tile_weights: Dictionary
+var overall_tile_weight: float
+
+var accumulated_powerup_weights: Dictionary
+var overall_powerup_weight: float
 
 var new_tile: Tile
 var current_active_tile: Tile
@@ -56,6 +70,7 @@ var modifiers: Array = []
 
 var tiles_reference: Dictionary = {}
 var barriers_reference: Dictionary = {}
+var powerups_reference: Dictionary = {}
 
 var train_step_timer: Timer = Timer.new()
 var speedup_cooldown_timer: Timer = Timer.new()
@@ -69,10 +84,12 @@ var speedup_active: bool = false
 var speedup_cooldown_active: bool = false
 
 func _ready() -> void:
-#	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.TEST_CLEAR_4
-	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.NONE
+	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.TEST_CLEAR_4
+#	var debug_mode: DEBUG_BOARD = DEBUG_BOARD.NONE
 	randomize()
 	_create_playable_area()
+	_setup_random_tile_weights()
+	_setup_random_powerup_weights()
 	_create_board(debug_mode)
 	_create_barriers()
 	# Set cursor
@@ -159,21 +176,43 @@ func sum_array(array: Array) -> float:
 		return n
 
 
-func _setup_random_weights() -> void:
-	accumulated_weights = {}
+func _setup_random_tile_weights() -> void:
+	randomize()
+	accumulated_tile_weights = {}
 	var tracked_weight = 0.0
-	for tile_id in selection_weights.keys():
-		tracked_weight += selection_weights[tile_id]
-		accumulated_weights[tile_id] = tracked_weight
+	for tile_id in selection_tile_weights.keys():
+		tracked_weight += selection_tile_weights[tile_id]
+		accumulated_tile_weights[tile_id] = tracked_weight
 		
-	overall_weight = sum_array(selection_weights.values())
+	overall_tile_weight = sum_array(selection_tile_weights.values())
 	# Weight initialisation complete!
 
 
+func _setup_random_powerup_weights() -> void:
+	randomize()
+	accumulated_powerup_weights = {}
+	var tracked_weight = 0.0
+	for powerup_id in selection_powerup_weights.keys():
+		tracked_weight += selection_powerup_weights[powerup_id]
+		accumulated_powerup_weights[powerup_id] = tracked_weight
+		
+	overall_powerup_weight = sum_array(selection_powerup_weights.values())
+	print(accumulated_powerup_weights)
+	# Weight initialisation complete!
+
+
+func _select_random_powerup() -> Powerup.PowerupID:
+	var roll: float = randf_range(0.0, overall_powerup_weight)
+	for powerup_id in accumulated_powerup_weights.keys():
+		if accumulated_powerup_weights[powerup_id] > roll:
+			return powerup_id
+	return Powerup.PowerupID.NONE
+
+
 func _select_random_tile() -> Tile.TileID:
-	var roll: float = randf_range(0.0, overall_weight)
-	for tile_id in accumulated_weights.keys():
-		if accumulated_weights[tile_id] > roll:
+	var roll: float = randf_range(0.0, overall_tile_weight)
+	for tile_id in accumulated_tile_weights.keys():
+		if accumulated_tile_weights[tile_id] > roll:
 			return tile_id
 	return Tile.TileID.EMPTY
 
@@ -188,10 +227,6 @@ func _create_standard_board() -> void:
 			tiles_reference[new_tile_coord] = new_tile
 			new_tile.set_tile_coord(new_tile_coord)
 			barriers_reference[new_tile_coord] = []
-	
-	# Then carefully randomise the board
-	# Not too many of one type, more of the basic types. No empties initially
-	_setup_random_weights()
 	
 	for tile_ref in tiles_reference.values():
 		tile_ref.set_tile(_select_random_tile())
@@ -380,7 +415,7 @@ func _create_train_timer() -> void:
 	add_child(speedup_cooldown_timer)
 
 
-func _on_tile_rotated(tile_coord: Vector2i, tile_reference: Tile, new_tile_id: Tile.TileID) -> void:
+func _on_tile_rotated(tile_coord: Vector2i, _tile_reference: Tile, _new_tile_id: Tile.TileID) -> void:
 	_update_barriers_for_tile(tile_coord)
 
 
@@ -422,6 +457,34 @@ func _disable_runway(runway_to_disable: int, x_coord: int) -> void:
 	
 	if len(available_runways) == 0:
 		SignalBus.emit_signal("game_lost")
+
+
+func spawn_powerup() -> void:
+	# Roll for powerup
+	var powerups_to_clear: Array = []
+	for powerup_coord in powerups_reference.keys():
+		var freed = powerups_reference[powerup_coord].increment_turn()
+		if freed:
+			powerups_to_clear.append(powerup_coord)
+	
+	for powerup_coord in powerups_to_clear:
+		powerups_reference.erase(powerup_coord)
+	
+	var new_powerup_id = _select_random_powerup()
+	if new_powerup_id != Powerup.PowerupID.NONE:
+		var new_powerup = POWERUP_SCENE.instantiate()
+		powerups.add_child(new_powerup)
+		new_powerup.set_powerup(new_powerup_id)
+		new_powerup.game_board_reference = self
+		
+		# Select random point
+		var spawn_coord: Vector2i = Vector2i(randi_range(0, GRID_WIDTH - 1), randi_range(0, GRID_HEIGHT - 1))
+		while spawn_coord in powerups_reference:
+			spawn_coord = Vector2i(randi_range(0, GRID_WIDTH - 1), randi_range(0, GRID_HEIGHT - 1))
+			
+		var spawn_point = Vector2i(GRID_START_X + GRID_SIZE * spawn_coord.x, GRID_START_Y + GRID_SIZE * spawn_coord.y)
+		new_powerup.global_position = spawn_point
+		powerups_reference[spawn_coord] = new_powerup
 
 
 func _on_train_converted_to_blocks(new_block_positions: Array[Vector2i], block_colour: Color) -> void:
@@ -494,6 +557,7 @@ func _regenerate_board() -> void:
 			new_tile = TILE_SCENE.instantiate()
 			new_tile.global_position = Vector2(GRID_START_X + x * GRID_SIZE, TILE_SPAWN_START.y - GRID_SIZE * num_rows_to_drop + y * GRID_SIZE)
 			tiles.add_child(new_tile)
+			new_tile.set_tile(_select_random_tile())
 			var new_tile_coord: Vector2i = Vector2i(x, y)
 			var new_tile_position = _get_global_position_from_grid_coord(new_tile_coord)
 			new_tile.animate_to_location(new_tile_position, TILE_MOVE_DELAY * x, new_tile_coord)
@@ -501,6 +565,12 @@ func _regenerate_board() -> void:
 	
 	# Rebuild all barriers
 	_create_barriers()
+	
+	# Reset all tile selectability for safety
+	for tile_ref in tiles_reference.values():
+		tile_ref.set_is_selected(false)
+	current_active_tile = tiles_reference[Vector2i(0, 0)]
+	current_active_tile.set_is_selected(true)
 
 
 func clear_row(row: int) -> void:
@@ -510,6 +580,7 @@ func clear_row(row: int) -> void:
 
 
 func _attempt_clear() -> void:
+	print("ATTEMPTING CLEAR")
 	rows_to_clear = []
 	var clearable_row: bool
 	for y in range(GRID_HEIGHT):
@@ -520,10 +591,13 @@ func _attempt_clear() -> void:
 		if clearable_row:
 			rows_to_clear.append(y)
 	
+	print("CLEARABLE ROWS " + str(rows_to_clear))
+	
 	if len(rows_to_clear) > 0:
 		for row in rows_to_clear:
 			clear_row(row)
 		SignalBus.emit_signal("rows_cleared", len(rows_to_clear), modifiers)
 		_regenerate_board()
 	if not GameControl.game_lost:
+		spawn_powerup()
 		spawn_train()
