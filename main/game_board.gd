@@ -23,7 +23,7 @@ const TILE_SPAWN_START: Vector2i = Vector2i(GRID_START_X, 0 - GRID_SIZE)
 
 enum DEBUG_BOARD {NONE, TEST_CLEAR_1, TEST_CLEAR_4, TEST_CLEAR_SPLIT_3}
 
-var available_runways = range(1, NUM_RUNWAYS)
+var available_runways = range(1, NUM_RUNWAYS + 1)
 
 @onready var playable_area: NinePatchRect = $playable_area
 @onready var tiles: Node2D = $tiles
@@ -35,13 +35,13 @@ var available_runways = range(1, NUM_RUNWAYS)
 @onready var mountain: Sprite2D = $mountain
 
 const selection_weights: Dictionary = {
-	Tile.TileID.VERT: 0.6,
-	Tile.TileID.HORIZ: 0.6,
+	Tile.TileID.VERT: 0.5  ,
+	Tile.TileID.HORIZ: 0.5,
 	Tile.TileID.CROSS: 0.75,
-	Tile.TileID.LEFT_UP: 0.5,
-	Tile.TileID.RIGHT_UP: 0.5,
-	Tile.TileID.LEFT_DOWN: 0.5,
-	Tile.TileID.RIGHT_DOWN: 0.5,
+	Tile.TileID.LEFT_UP: 0.3,
+	Tile.TileID.RIGHT_UP: 0.3,
+	Tile.TileID.LEFT_DOWN: 0.3,
+	Tile.TileID.RIGHT_DOWN: 0.3,
 	Tile.TileID.RIGHT_SWITCHBACK: 0.75,
 	Tile.TileID.LEFT_SWITCHBACK: 0.75
 }
@@ -103,7 +103,7 @@ func _process(_delta: float) -> void:
 		elif global_mouse_pos != prev_mouse_pos:
 			# Detected mouse input
 			for tile_pos in tiles_reference.keys():
-				if tiles_reference[tile_pos].tile_rect.has_point(global_mouse_pos) and tile_pos != active_mouse_grid_pos:
+				if tiles_reference[tile_pos].tile_rect.has_point(global_mouse_pos) and tile_pos != active_mouse_grid_pos and tiles_reference[tile_pos].is_selectable:
 					active_mouse_grid_pos = tile_pos
 					new_grid_position = tile_cursor.move_cursor_grid_with_animate(active_mouse_grid_pos, false)
 					_select_active_tile(tile_pos)
@@ -236,6 +236,8 @@ func _create_board(debug_option: DEBUG_BOARD = DEBUG_BOARD.NONE) -> void:
 			if y == 0:
 				new_tile.show_tunnel()
 			new_tile.set_tile(Tile.TileID.VERT)
+			new_tile.set_is_selectable(false)
+			tiles_reference[Vector2i(x, y - RUNWAY_LENGTH + 1)] = new_tile
 
 	# Place mountain
 	mountain.global_position = Vector2i(GRID_START_X / 3 + 5, GRID_START_Y - GRID_SIZE * 7)
@@ -289,8 +291,11 @@ func _resolve_barrier_to_tile(
 		elif adjacent_tile_coord.y >= GRID_HEIGHT:
 			if Tile.Dir.DOWN in current_connection_points:
 				_add_single_barrier_to_tile(adjacent_tile_coord, Barrier.BarrierID.UP)
-		elif adjacent_tile_coord.y < 0 and adjacent_tile_coord.x % 2 != 0:
+		elif adjacent_tile_coord.y == -1 and adjacent_tile_coord.x % 2 != 0:
 			if Tile.Dir.UP not in current_connection_points:
+				_add_single_barrier_to_tile(adjacent_tile_coord, Barrier.BarrierID.DOWN)
+		elif adjacent_tile_coord.y == -1 and adjacent_tile_coord.x % 2 == 0:
+			if Tile.Dir.UP in current_connection_points:
 				_add_single_barrier_to_tile(adjacent_tile_coord, Barrier.BarrierID.DOWN)
 		return  # Early return so as to not handle out of bounds
 	
@@ -399,10 +404,34 @@ func _on_level_reached() -> void:
 	_restart_step_timer()
 
 
+func _disable_runway(runway_to_disable: int, x_coord: int) -> void:
+	print("STATE OF AVAILABLE RUNWAYS BEFORE CLEARING " + str(available_runways))
+	if runway_to_disable not in available_runways:  # Already cleared
+		return
+	available_runways.erase(runway_to_disable)
+	var runway_ref: Tile
+	for y in range(0, -RUNWAY_LENGTH -1, -1):
+		print("CHECKING FOR TUNNEL ON " + str(Vector2i(x_coord, y)))
+		runway_ref = tiles_reference.get(Vector2i(x_coord, y))
+		if runway_ref != null:
+			if runway_ref.has_tunnel:
+				runway_ref.disable_tunnel()
+	
+	if len(available_runways) == 0:
+		SignalBus.emit_signal("game_lost")
+
+
 func _on_train_converted_to_blocks(new_block_positions: Array[Vector2i], block_colour: Color) -> void:
 	for block_coord in new_block_positions:
-		# TODO If block_coord is on a runway, disable it
-		tiles_reference[block_coord].convert_to_block(block_colour)
+		print("Converting " + str(block_coord))
+		var runway_of_block = ceil(float(block_coord.x) / 2.0)
+		var tile_to_convert = tiles_reference.get(block_coord)
+		if block_coord.y < 0:
+			# Runway disabled
+			print("DISABLING RUNWAY " + str(runway_of_block))
+			_disable_runway(runway_of_block, block_coord.x)
+			continue
+		tile_to_convert.convert_to_block(block_colour)
 		_update_barriers_for_tile(block_coord)
 		speedup_cooldown_timer.start()
 		speedup_cooldown_active = true

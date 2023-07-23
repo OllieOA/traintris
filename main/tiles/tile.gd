@@ -74,6 +74,8 @@ var tile_coord: Vector2i : set = set_tile_coord, get = get_tile_coord
 
 var is_rotatable: bool = true : set = set_is_rotatable, get = get_is_rotatable
 var is_selected: bool = false : set = set_is_selected
+var is_selectable: bool = true : set = set_is_selectable
+var has_tunnel: bool = false : set = set_has_tunnel
 var tile_rect: Rect2
 
 @onready var tile_sprite: Sprite2D = $tile_sprite
@@ -150,6 +152,10 @@ func get_is_rotatable() -> bool:
 	return is_rotatable
 
 
+func set_is_selectable(val: bool) -> void:
+	is_selectable = val
+
+
 func set_is_selected(val: bool) -> void:
 	is_selected = val
 
@@ -174,5 +180,14 @@ func get_tile_coord() -> Vector2i:
 	return tile_coord
 
 
+func disable_tunnel() -> void:
+	tunnel_sprite.frame = 1
+
+
 func show_tunnel() -> void:
 	tunnel_sprite.show()
+	set_has_tunnel(true)
+
+
+func set_has_tunnel(val: bool) -> void:
+	has_tunnel = val

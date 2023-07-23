@@ -14,7 +14,7 @@
 - [ ] Add in props around the cleared board area (generative?)
 - [x] Create debug boards for testing
 - [x] Clear board on full line match
-- [ ] Remove runways when trains stop on one
+- [x] Remove runways when trains stop on one
 - [x] Add "switchback" tiles
 ## UI
 - [x] Add levels (seasons) widget
@@ -30,6 +30,8 @@
 	- [ ] Sound setting
 - [ ] Add start level selector
 - [ ] Add exclamation points when 1 away from barrier
+- [ ] Add powerups to turn trains full vert/full horizontal
+- [ ] Add powerup for nuclear option (clear board no points)
 ## Game
 - [x] Increase speed based on level
 - [ ] Increase min/max train length with levels
@@ -47,3 +49,4 @@
 ## Bug
 - [x] Fix coal truck wheels
 - [ ] Train can roll over blocks (should be fixed by runway handling)
+- [x] Train cannot collide with top of board

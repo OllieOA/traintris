@@ -25,3 +25,4 @@ z_index = 2
 texture = ExtResource("4_krcmx")
 centered = false
 offset = Vector2(-16, -16)
+hframes = 2
